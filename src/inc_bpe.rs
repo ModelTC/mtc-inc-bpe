@@ -158,7 +158,10 @@ impl<T: Borrow<IncBpeTokenizer>> IncBpeTokenization<T> {
                 forest_id = tree.search(skip_to);
             }
             let node = &tokenizer.forest[forest_id];
-            (IncBpeToken::const_new(node.token_id, node.skip_len), forest_id)
+            (
+                IncBpeToken::const_new(node.token_id, node.skip_len),
+                forest_id,
+            )
         } else {
             self.ac_state = AC_NODE_ROOT;
             (IncBpeToken::const_new(token_id, 1), FOREST_VIRTUAL_ROOT)
