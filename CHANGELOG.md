@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.7.0...v0.7.1) - 2026-01-05
+
+### Fixed
+
+- inline more functions
+
+### Other
+
+- *(format)* format the code
+- disable default features of dependencies
+
 ## [0.7.0](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.6.0...v0.7.0) - 2025-12-09
 
 ### Added
