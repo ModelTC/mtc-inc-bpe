@@ -44,10 +44,12 @@ pub struct IncBpeTokenization<T> {
 }
 
 impl IncBpeToken {
+    #[inline(always)]
     pub const fn const_new(token_id: TokenId, skip_len: SkipLen) -> Self {
         Self { token_id, skip_len }
     }
 
+    #[inline(always)]
     pub fn new<I: Into<TokenId>>(token_id: I, skip_len: SkipLen) -> Self {
         Self::const_new(token_id.into(), skip_len)
     }
@@ -82,22 +84,26 @@ impl IncBpeTokenizer {
         state
     }
 
+    #[inline(always)]
     pub fn tokenization(&self) -> IncBpeTokenization<&Self> {
         IncBpeTokenization::new(self)
     }
 }
 
 impl<S> IncBpeTokenChainIter<S> {
+    #[inline(always)]
     pub fn pos(&self) -> usize {
         self.pos
     }
 
+    #[inline(always)]
     pub fn seq(&self) -> &S {
         &self.seq
     }
 }
 
 impl<S: Borrow<[IncBpeToken]>> IncBpeTokenChainIter<S> {
+    #[inline(always)]
     pub fn token_ids(self) -> impl Iterator<Item = TokenId> {
         self.map(|(_, t)| t.token_id)
     }
@@ -106,6 +112,7 @@ impl<S: Borrow<[IncBpeToken]>> IncBpeTokenChainIter<S> {
 impl<S: Borrow<[IncBpeToken]>> Iterator for IncBpeTokenChainIter<S> {
     type Item = (usize, IncBpeToken);
 
+    #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         let seq: &[IncBpeToken] = self.seq.borrow();
         let pos = self.pos;
@@ -151,10 +158,10 @@ impl<T: Borrow<IncBpeTokenizer>> IncBpeTokenization<T> {
                 forest_id = tree.search(skip_to);
             }
             let node = &tokenizer.forest[forest_id];
-            (IncBpeToken::new(node.token_id, node.skip_len), forest_id)
+            (IncBpeToken::const_new(node.token_id, node.skip_len), forest_id)
         } else {
             self.ac_state = AC_NODE_ROOT;
-            (IncBpeToken::new(token_id, 1), FOREST_VIRTUAL_ROOT)
+            (IncBpeToken::const_new(token_id, 1), FOREST_VIRTUAL_ROOT)
         };
         self.tokens.push(token);
         self.forest_ids.push(node_id);
@@ -163,6 +170,7 @@ impl<T: Borrow<IncBpeTokenizer>> IncBpeTokenization<T> {
 }
 
 impl<T> IncBpeTokenization<T> {
+    #[inline(always)]
     pub fn new(tokenizer: T) -> Self {
         Self {
             tokenizer,
@@ -172,6 +180,7 @@ impl<T> IncBpeTokenization<T> {
         }
     }
 
+    #[inline(always)]
     pub(crate) fn new_internal(
         tokenizer: T,
         ac_state: ACNodeId,
@@ -186,37 +195,45 @@ impl<T> IncBpeTokenization<T> {
         }
     }
 
+    #[inline(always)]
     pub fn reset(&mut self) {
         self.tokens.clear();
         self.forest_ids.clear();
         self.ac_state = AC_NODE_ROOT;
     }
 
+    #[inline(always)]
     pub fn reserve(&mut self, additional: usize) {
         self.tokens.reserve(additional);
         self.forest_ids.reserve(additional);
     }
 
+    #[inline(always)]
     pub fn inc_tokens(&self) -> &[IncBpeToken] {
         &self.tokens
     }
 
+    #[inline(always)]
     pub fn tokenizer(&self) -> &T {
         &self.tokenizer
     }
 
+    #[inline(always)]
     pub fn into_inner(self) -> (T, Vec<IncBpeToken>) {
         (self.tokenizer, self.tokens)
     }
 
+    #[inline(always)]
     pub fn into_inc_tokens(self) -> Vec<IncBpeToken> {
         self.tokens
     }
 
+    #[inline(always)]
     pub fn token_chain(&self, end_pos: usize) -> IncBpeTokenChainIter<&[IncBpeToken]> {
         IncBpeTokenChainIter::new(&self.tokens, end_pos)
     }
 
+    #[inline(always)]
     pub fn current_token_chain(&self) -> IncBpeTokenChainIter<&[IncBpeToken]> {
         self.token_chain(self.tokens.len().saturating_sub(1))
     }

@@ -29,6 +29,7 @@ pub enum VocabBuildError {
     TokenTooLong { id: TokenId },
 }
 
+#[inline(always)]
 fn utf8_char_token(token: &[u8]) -> Option<char> {
     if token.is_empty() || token.len() > 4 {
         return None;
@@ -85,34 +86,42 @@ impl Vocab {
         })
     }
 
+    #[inline(always)]
     pub fn find_token_id<T: AsRef<[u8]>>(&self, token: T) -> Option<TokenId> {
         self.token_to_id.get(token.as_ref()).copied()
     }
 
+    #[inline(always)]
     pub fn get_token<T: Into<TokenId>>(&self, token_id: T) -> Option<&Token> {
         self.tokens.get(token_id.into())
     }
 
+    #[inline(always)]
     pub fn num_of_tokens(&self) -> TokenId {
         self.tokens.len()
     }
 
+    #[inline(always)]
     pub fn tokens(&self) -> &[Token] {
         self.tokens.as_slice()
     }
 
+    #[inline(always)]
     pub fn token_to_id_map(&self) -> &RapidHashMap<Token, TokenId> {
         &self.token_to_id
     }
 
+    #[inline(always)]
     pub fn find_by_byte(&self, b: u8) -> Option<TokenId> {
         Some(self.u8_to_id[b as usize]).filter(|&i| i != TokenId::MAX)
     }
 
+    #[inline(always)]
     pub fn find_by_char(&self, c: char) -> Option<TokenId> {
         self.char_to_id.get(&c).copied()
     }
 
+    #[inline(always)]
     pub fn split_bytes_to_tokens(
         &self,
         seq: &[u8],
@@ -120,6 +129,7 @@ impl Vocab {
         seq.iter().map(|&b| self.find_by_byte(b))
     }
 
+    #[inline(always)]
     pub fn split_utf8_to_tokens(
         &self,
         seq: &str,

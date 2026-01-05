@@ -26,6 +26,7 @@ pub(crate) const SINGLETON_PRIORITY: RuleId = {
     priority
 };
 
+#[inline(always)]
 fn singleton_token_id(rule_id: RuleId) -> TokenId {
     debug_assert!(rule_id >= SINGLETON_PRIORITY);
     TokenId::new((rule_id - SINGLETON_PRIORITY).inner())
@@ -145,7 +146,7 @@ impl NormalizedDict {
         })
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn priority(&self, token_id: TokenId) -> RuleId {
         self.priorities
             .get(token_id)
@@ -153,12 +154,12 @@ impl NormalizedDict {
             .unwrap_or(RuleId::MAX)
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn is_single(&self, token_id: TokenId) -> bool {
         self.is_useful(token_id) && self.priorities[token_id] >= SINGLETON_PRIORITY
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn is_useful(&self, token_id: TokenId) -> bool {
         self.priority(token_id) != RuleId::MAX
     }
