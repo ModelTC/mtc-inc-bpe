@@ -29,6 +29,7 @@ pub struct EagerBpeTokenization<T> {
 }
 
 impl IncBpeTokenizer {
+    #[inline(always)]
     pub fn eager(&self) -> EagerBpeTokenization<&Self> {
         EagerBpeTokenization {
             tokenizer: self,
@@ -42,6 +43,7 @@ impl IncBpeTokenizer {
 }
 
 impl<T> From<EagerBpeTokenization<T>> for IncBpeTokenization<T> {
+    #[inline(always)]
     fn from(value: EagerBpeTokenization<T>) -> Self {
         let capacity = value.nodes.len();
         let mut forest_ids = Vec::with_capacity(capacity);
@@ -55,6 +57,7 @@ impl<T> From<EagerBpeTokenization<T>> for IncBpeTokenization<T> {
 }
 
 impl<T> EagerBpeTokenization<T> {
+    #[inline(always)]
     fn pop_prefix_removed_nodes(&mut self) {
         while self.useful_offset > 0
             && self
@@ -67,6 +70,7 @@ impl<T> EagerBpeTokenization<T> {
         }
     }
 
+    #[inline(always)]
     fn move_forward_useful_offset(&mut self) {
         debug_assert!(self.useful_offset as usize + 1 < self.nodes.len());
         let mut idx = self.useful_offset;
@@ -88,6 +92,7 @@ impl<T> EagerBpeTokenization<T> {
 }
 
 impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
+    #[inline(always)]
     fn maintain_useful_offset(&mut self) {
         let tokenizer: &IncBpeTokenizer = self.tokenizer.borrow();
         let target_useful_bytes = tokenizer.ac_depths[self.ac_state];
@@ -99,6 +104,7 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
         }
     }
 
+    #[inline(always)]
     fn push(&mut self, forest_id: ForestNodeId, feed_len: u16) {
         let tokenizer: &IncBpeTokenizer = self.tokenizer.borrow();
         let suc_node = &tokenizer.forest[forest_id];
@@ -180,6 +186,7 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
 }
 
 impl<T> EagerBpeTokenization<T> {
+    #[inline(always)]
     pub fn new(tokenizer: T) -> Self {
         Self {
             tokenizer,
@@ -191,6 +198,7 @@ impl<T> EagerBpeTokenization<T> {
         }
     }
 
+    #[inline(always)]
     pub fn reset(&mut self) {
         self.nodes.clear();
         self.useful_offset = 0;
@@ -199,10 +207,12 @@ impl<T> EagerBpeTokenization<T> {
         self.ac_state = AC_NODE_ROOT;
     }
 
+    #[inline(always)]
     pub fn reserve(&mut self, additional: usize) {
         self.nodes.reserve(additional);
     }
 
+    #[inline(always)]
     pub fn tokenizer(&self) -> &T {
         &self.tokenizer
     }
@@ -211,6 +221,7 @@ impl<T> EagerBpeTokenization<T> {
 impl<T> Iterator for EagerBpeTokenization<T> {
     type Item = IncBpeToken;
 
+    #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         if self.num_roots != 1 {
             return None;

@@ -143,22 +143,27 @@ impl Dictionary {
         Ok(Self::from_rules(vocab, rules))
     }
 
+    #[inline(always)]
     pub fn rules(&self) -> &[Rule] {
         self.rules.as_slice()
     }
 
+    #[inline(always)]
     pub fn get_rule(&self, rule_id: RuleId) -> Option<&Rule> {
         self.rules.get(rule_id)
     }
 
+    #[inline(always)]
     pub fn num_of_rules(&self) -> RuleId {
         self.rules.len()
     }
 
+    #[inline(always)]
     pub fn find_rule(&self, left: TokenId, right: TokenId) -> Option<RuleId> {
         self.pair_to_rule_id.get(&(left, right)).copied()
     }
 
+    #[inline(always)]
     pub fn get_rule_ids(&self, token_id: TokenId) -> Option<&[RuleId]> {
         self.token_to_rule_ids.get(token_id).map(|v| v.as_slice())
     }
