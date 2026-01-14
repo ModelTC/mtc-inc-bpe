@@ -10,12 +10,12 @@ mod typed_vec;
 mod vocab;
 
 pub use crate::{
-    dict::{DictBuildError, Dictionary, Rule, RuleId, UnknownToken},
+    dict::{DictBuildError, Dictionary, Rule, RuleId},
     eager::EagerBpeTokenization,
     inc_bpe::{IncBpeToken, IncBpeTokenChainIter, IncBpeTokenization, IncBpeTokenizer},
     normalize::{NormalizedDict, NormalizedDictBuildError},
     successor::SkipLen,
-    vocab::{Token, TokenId, Vocab, VocabBuildError},
+    vocab::{MAX_TOKEN_LENGTH, Token, TokenId, Vocab, VocabBuildError},
 };
 
 #[cfg(test)]

@@ -9,8 +9,11 @@ use crate::{Dictionary, RuleId, TokenId, typed_vec::TypedVec};
 #[derive(Clone, Debug, Error)]
 #[non_exhaustive]
 pub enum NormalizedDictBuildError {
-    #[error("singleton token {suf} is a suffix of singleton token {id}, which is not allowed")]
-    SingletonSuffix { id: TokenId, suf: TokenId },
+    #[error("atomic token {suf_token_id} is a suffix of anothor atomic token {token_id}")]
+    AtomicTokenSuffix {
+        token_id: TokenId,
+        suf_token_id: TokenId,
+    },
 }
 
 #[derive(Clone, Debug, Deref)]
@@ -19,38 +22,38 @@ pub struct NormalizedDict {
     dict: Dictionary,
     pub(crate) priorities: TypedVec<TokenId, RuleId>,
     #[cfg(test)]
-    pub(crate) useful_rules: RapidHashMap<(TokenId, TokenId), RuleId>,
+    pub(crate) canonical_rules: RapidHashMap<(TokenId, TokenId), RuleId>,
 }
 
-pub(crate) const SINGLETON_PRIORITY: RuleId = {
+pub(crate) const ATOMIC_TOKEN_PRIORITY: RuleId = {
     let mut priority = RuleId::MAX;
     *priority.inner_mut() = (priority.inner() >> 1) + 1;
     priority
 };
 
 #[inline(always)]
-fn singleton_token_id(rule_id: RuleId) -> TokenId {
-    debug_assert!(rule_id >= SINGLETON_PRIORITY);
-    TokenId::new((rule_id - SINGLETON_PRIORITY).inner())
+fn to_atomic_token_id(rule_id: RuleId) -> TokenId {
+    debug_assert!(rule_id >= ATOMIC_TOKEN_PRIORITY);
+    TokenId::new((rule_id - ATOMIC_TOKEN_PRIORITY).inner())
 }
 
 impl NormalizedDict {
     pub fn new<F: FnMut(&Dictionary, TokenId, &[u8]) -> bool>(
         dict: Dictionary,
-        mut is_single: F,
+        mut is_atomic: F,
     ) -> Result<Self, NormalizedDictBuildError> {
         let capacity = dict.num_of_tokens();
         let mut priorities = TypedVec::new_with(RuleId::MAX, capacity);
-        let mut useful_rules = RapidHashMap::with_capacity(capacity.as_usize());
+        let mut canonical_rules = RapidHashMap::with_capacity(capacity.as_usize());
 
         for (token_id, priority) in priorities.enumerate_mut() {
             let token = &dict[token_id];
             if token.is_empty() {
                 continue;
             }
-            if is_single(&dict, token_id, token) {
-                debug_assert!(token_id.as_usize() < SINGLETON_PRIORITY.as_usize());
-                let mut p = SINGLETON_PRIORITY;
+            if is_atomic(&dict, token_id, token) {
+                debug_assert!(token_id.as_usize() < ATOMIC_TOKEN_PRIORITY.as_usize());
+                let mut p = ATOMIC_TOKEN_PRIORITY;
                 *p.inner_mut() += token_id.inner();
                 *priority = p;
             }
@@ -66,7 +69,10 @@ impl NormalizedDict {
                     if priorities[suf] == RuleId::MAX {
                         continue;
                     }
-                    return Err(NormalizedDictBuildError::SingletonSuffix { id: token_id, suf });
+                    return Err(NormalizedDictBuildError::AtomicTokenSuffix {
+                        token_id,
+                        suf_token_id: suf,
+                    });
                 }
             }
         }
@@ -78,18 +84,18 @@ impl NormalizedDict {
             {
                 continue;
             }
-            while left < SINGLETON_PRIORITY || right < SINGLETON_PRIORITY {
+            while left < ATOMIC_TOKEN_PRIORITY || right < ATOMIC_TOKEN_PRIORITY {
                 let (u, v): (TokenId, TokenId);
                 if left == right {
                     u = dict[left].suc;
                     v = dict[right].pre;
-                } else if left >= SINGLETON_PRIORITY {
-                    u = singleton_token_id(left);
+                } else if left >= ATOMIC_TOKEN_PRIORITY {
+                    u = to_atomic_token_id(left);
                     v = dict[right].pre;
                     debug_assert_eq!(left, priorities[u]);
-                } else if right >= SINGLETON_PRIORITY {
+                } else if right >= ATOMIC_TOKEN_PRIORITY {
                     u = dict[left].suc;
-                    v = singleton_token_id(right);
+                    v = to_atomic_token_id(right);
                     debug_assert_eq!(right, priorities[v]);
                 } else if left > right {
                     u = dict[left].suc;
@@ -100,9 +106,9 @@ impl NormalizedDict {
                     v = dict[right].pre;
                     debug_assert_eq!(left, priorities[u]);
                 }
-                if let Some(&mid) = useful_rules.get(&(u, v)) {
-                    debug_assert!(priorities[u] >= SINGLETON_PRIORITY || mid > priorities[u]);
-                    debug_assert!(priorities[v] >= SINGLETON_PRIORITY || mid > priorities[v]);
+                if let Some(&mid) = canonical_rules.get(&(u, v)) {
+                    debug_assert!(priorities[u] >= ATOMIC_TOKEN_PRIORITY || mid > priorities[u]);
+                    debug_assert!(priorities[v] >= ATOMIC_TOKEN_PRIORITY || mid > priorities[v]);
                     if left == right || right == priorities[v] {
                         if mid < left {
                             continue 'outer;
@@ -111,17 +117,17 @@ impl NormalizedDict {
                         continue 'outer;
                     }
                 }
-                if left < SINGLETON_PRIORITY {
+                if left < ATOMIC_TOKEN_PRIORITY {
                     left = priorities[u];
                 }
-                if right < SINGLETON_PRIORITY {
+                if right < ATOMIC_TOKEN_PRIORITY {
                     right = priorities[v];
                 }
                 debug_assert_ne!(left, RuleId::MAX);
                 debug_assert_ne!(right, RuleId::MAX);
             }
             priorities[rule.merged] = id;
-            let res = useful_rules.insert((rule.pre, rule.suc), id);
+            let res = canonical_rules.insert((rule.pre, rule.suc), id);
             debug_assert!(res.is_none());
         }
 
@@ -129,7 +135,7 @@ impl NormalizedDict {
             dict,
             priorities,
             #[cfg(test)]
-            useful_rules,
+            canonical_rules,
         })
     }
 
@@ -157,21 +163,21 @@ impl NormalizedDict {
     }
 
     #[inline(always)]
-    pub fn is_single(&self, token_id: TokenId) -> bool {
-        self.is_useful(token_id) && self.priorities[token_id] >= SINGLETON_PRIORITY
+    pub fn is_atomic(&self, token_id: TokenId) -> bool {
+        self.is_canonical(token_id) && self.priorities[token_id] >= ATOMIC_TOKEN_PRIORITY
     }
 
     #[inline(always)]
-    pub fn is_useful(&self, token_id: TokenId) -> bool {
+    pub fn is_canonical(&self, token_id: TokenId) -> bool {
         self.priority(token_id) != RuleId::MAX
     }
 
     #[inline(always)]
-    pub fn iter_useful_tokens_or_empty(
+    pub fn iter_canonical_or_empty_tokens(
         &self,
     ) -> impl DoubleEndedIterator<Item = &[u8]> + ExactSizeIterator + FusedIterator {
         self.tokens.enumerate().map(|(token_id, bytes)| {
-            if self.is_useful(token_id) {
+            if self.is_canonical(token_id) {
                 bytes.as_ref()
             } else {
                 &[]
@@ -198,10 +204,10 @@ mod tests {
         let dict = NormalizedDict::new_in_bytes(dict.clone()).unwrap();
         for rule in &dict.rules {
             let token_id = rule.merged;
-            assert!(!dict.is_single(token_id));
+            assert!(!dict.is_atomic(token_id));
             let seq = &dict[token_id];
             let res = bpe_with_heap::<false>(&dict, bytes_into_tokens(&dict, seq, 0usize));
-            assert!(dict.is_useful(token_id) ^ (res != vec![token_id]));
+            assert!(dict.is_canonical(token_id) ^ (res != vec![token_id]));
         }
         dict
     }
@@ -213,21 +219,21 @@ mod tests {
             let seq = match std::str::from_utf8(&dict[token_id]) {
                 Ok(seq) => seq,
                 Err(_) => {
-                    assert!(!dict.is_useful(token_id));
+                    assert!(!dict.is_canonical(token_id));
                     continue;
                 }
             };
-            assert!(!dict.is_single(token_id));
+            assert!(!dict.is_atomic(token_id));
             let res = bpe_with_heap::<false>(&dict, utf8_into_tokens(&dict, seq, 0usize));
-            assert!(dict.is_useful(token_id) ^ (res != vec![token_id]));
+            assert!(dict.is_canonical(token_id) ^ (res != vec![token_id]));
         }
         dict
     }
 
-    fn useful_rules<R: IntoIterator<Item = u32>>(dict: &NormalizedDict, rules: R) {
+    fn canonical_rules<R: IntoIterator<Item = u32>>(dict: &NormalizedDict, rules: R) {
         let mut rules: Vec<_> = rules.into_iter().map(RuleId::new).collect();
         rules.sort();
-        let mut expected: Vec<_> = dict.useful_rules.values().copied().collect();
+        let mut expected: Vec<_> = dict.canonical_rules.values().copied().collect();
         expected.sort();
         assert_eq!(rules, expected);
     }
@@ -237,9 +243,9 @@ mod tests {
         rules: R,
     ) -> NormalizedDict {
         let normalized = build_in_bytes(dict);
-        useful_rules(&normalized, rules.clone());
+        canonical_rules(&normalized, rules.clone());
         let normalized = build_in_utf8(dict);
-        useful_rules(&normalized, rules);
+        canonical_rules(&normalized, rules);
         normalized
     }
 
@@ -279,7 +285,7 @@ mod tests {
             [(b"\xbd" as &[_], b"\xa0" as &[_]), (b"\xe4", b"\xbd\xa0")],
         );
         let normalized = build_in_bytes(&dict);
-        useful_rules(&normalized, [0, 1]);
+        canonical_rules(&normalized, [0, 1]);
 
         let dict = build_dict(&vocab, [("aa", "a"), ("a", "a")]);
         build_and_test_rules(&dict, [1]);
@@ -342,25 +348,25 @@ mod tests {
 
         let dict = build_dict(&vocab, [("你", "好"), ("你好", "呀")]);
         let normalized = build_in_utf8(&dict);
-        useful_rules(&normalized, [0, 1]);
+        canonical_rules(&normalized, [0, 1]);
         let dict = build_dict(&vocab, [("你", "好"), ("你好", "呀"), ("好", "你")]);
         let normalized = build_in_utf8(&dict);
-        useful_rules(&normalized, [0, 1, 2]);
+        canonical_rules(&normalized, [0, 1, 2]);
         let dict = build_dict(&vocab, [("你", "好"), ("好", "你"), ("你好", "呀")]);
         let normalized = build_in_utf8(&dict);
-        useful_rules(&normalized, [0, 1, 2]);
+        canonical_rules(&normalized, [0, 1, 2]);
         let dict = build_dict(&vocab, [("好", "你"), ("你", "好"), ("你好", "呀")]);
         let normalized = build_in_utf8(&dict);
-        useful_rules(&normalized, [0, 1, 2]);
+        canonical_rules(&normalized, [0, 1, 2]);
         let dict = build_dict(&vocab, [("你好", "呀"), ("你", "好"), ("好", "你")]);
         let normalized = build_in_utf8(&dict);
-        useful_rules(&normalized, [1, 2]);
+        canonical_rules(&normalized, [1, 2]);
         let dict = build_dict(&vocab, [("你好", "呀"), ("好", "你"), ("你", "好")]);
         let normalized = build_in_utf8(&dict);
-        useful_rules(&normalized, [1, 2]);
+        canonical_rules(&normalized, [1, 2]);
         let dict = build_dict(&vocab, [("好", "你"), ("你好", "呀"), ("你", "好")]);
         let normalized = build_in_utf8(&dict);
-        useful_rules(&normalized, [0, 2]);
+        canonical_rules(&normalized, [0, 2]);
 
         let vocab = Vocab::new([
             b"" as &[_],

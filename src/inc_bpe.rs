@@ -93,7 +93,7 @@ impl IncBpeToken {
 
 impl IncBpeTokenizer {
     pub fn new(dict: NormalizedDict) -> Self {
-        let automaton = ACAutomaton::new(dict.iter_useful_tokens_or_empty());
+        let automaton = ACAutomaton::new(dict.iter_canonical_or_empty_tokens());
         let forest = SucForest::new(&dict);
         let node_set = SufSucNodeSet::new(&forest, &automaton);
         let trees = SufSucCentroidTrees::new(&node_set, &forest);
@@ -169,7 +169,7 @@ impl<T: Borrow<IncBpeTokenizer>> IncBpeTokenization<T> {
     pub fn feed(&mut self, token_id: TokenId) -> IncBpeToken {
         let tokenizer: &IncBpeTokenizer = self.tokenizer.borrow();
         let (token, node_id) = if let Some(token) = tokenizer.get_token(token_id)
-            && tokenizer.is_useful(token_id)
+            && tokenizer.is_canonical(token_id)
         {
             #[cfg(debug_assertions)]
             {
@@ -339,15 +339,15 @@ mod tests {
         );
 
         let tokenize = |s: &str| {
-            let single_tokens = if IN_BYTES {
+            let atomic_tokens = if IN_BYTES {
                 bytes_into_tokens(&tokenizer, s, 0usize)
             } else {
                 utf8_into_tokens(&tokenizer, s, 0usize)
             };
             let res = tokenizer
-                .tokenize(single_tokens.iter().copied())
+                .tokenize(atomic_tokens.iter().copied())
                 .into_inc_tokens();
-            validate(&tokenizer, &single_tokens, &res);
+            validate(&tokenizer, &atomic_tokens, &res);
             res
         };
 
@@ -570,7 +570,7 @@ mod tests {
                 Dictionary::new_from_token_pair(vocab.clone(), rules.iter().copied()).unwrap();
             let normalized = NormalizedDict::new_in_bytes(dict).unwrap();
             let mut expected: Vec<_> = normalized
-                .useful_rules
+                .canonical_rules
                 .values()
                 .map(|i| i.as_usize())
                 .collect();
@@ -581,7 +581,7 @@ mod tests {
                     .tokens
                     .keys()
                     .skip(1)
-                    .all(|id| normalized.is_useful(id))
+                    .all(|id| normalized.is_canonical(id))
             );
         }
         inc_bpe_display_any_case(&vocab, &rules, &sequences);

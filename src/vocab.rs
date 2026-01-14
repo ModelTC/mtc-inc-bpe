@@ -12,6 +12,10 @@ pub type Token = Bytes;
 
 pub const MAX_TOKEN_LENGTH: usize = (1 << 14) - 1;
 
+const _: () = {
+    assert!(MAX_TOKEN_LENGTH < u16::MAX as usize);
+};
+
 #[derive(Clone, Debug)]
 pub struct Vocab {
     pub(crate) tokens: TypedVec<TokenId, Token>,
@@ -23,10 +27,11 @@ pub struct Vocab {
 #[derive(Clone, Debug, Error)]
 #[non_exhaustive]
 pub enum VocabBuildError {
-    #[error("duplicated tokens with id {a} and {b}")]
+    #[error("duplicated tokens with ids {a} and {b}")]
     Duplicated { a: TokenId, b: TokenId },
-    #[error("token {id} is too long, exceeded {MAX_TOKEN_LENGTH}")]
-    TokenTooLong { id: TokenId },
+    /// Token length is limited by [`MAX_TOKEN_LENGTH`].
+    #[error("token {token_id} exceeds length limit {MAX_TOKEN_LENGTH}")]
+    TokenTooLong { token_id: TokenId },
 }
 
 #[inline(always)]
@@ -54,30 +59,37 @@ impl Vocab {
         let mut token_to_id = RapidHashMap::default();
         let mut u8_to_id = Box::new([TokenId::MAX; _]);
         let mut char_to_id = RapidHashMap::default();
+
+        let convert_token = |(k, token): (usize, T)| {
+            let token = token.into();
+            let token_id = TokenId::from(k);
+            if token.len() == 1 {
+                u8_to_id[token.as_ref()[0] as usize] = token_id;
+            }
+            if let Some(c) = utf8_char_token(&token) {
+                char_to_id.insert(c, token_id);
+            }
+            if token.len() > MAX_TOKEN_LENGTH {
+                Err(VocabBuildError::TokenTooLong { token_id })
+            } else if !token.is_empty()
+                && let Some(other) = token_to_id.insert(token.clone(), token_id)
+            {
+                Err(VocabBuildError::Duplicated {
+                    a: other,
+                    b: token_id,
+                })
+            } else {
+                Ok(token)
+            }
+        };
+
         let tokens: TypedVec<_, _> = iter
             .into_iter()
             .enumerate()
-            .map(|(k, token)| {
-                let token = token.into();
-                let id = TokenId::from(k);
-                if token.len() == 1 {
-                    u8_to_id[token.as_ref()[0] as usize] = id;
-                }
-                if let Some(c) = utf8_char_token(&token) {
-                    char_to_id.insert(c, id);
-                }
-                if token.len() > MAX_TOKEN_LENGTH {
-                    Err(VocabBuildError::TokenTooLong { id })
-                } else if !token.is_empty()
-                    && let Some(other) = token_to_id.insert(token.clone(), id)
-                {
-                    Err(VocabBuildError::Duplicated { a: other, b: id })
-                } else {
-                    Ok(token)
-                }
-            })
+            .map(convert_token)
             .collect::<Result<_, _>>()?;
         debug_assert!(tokens.as_slice().len() >= token_to_id.len());
+
         Ok(Self {
             tokens,
             token_to_id,

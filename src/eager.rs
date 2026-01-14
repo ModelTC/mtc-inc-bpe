@@ -22,8 +22,8 @@ pub struct EagerBpeTokenization<T> {
     #[debug(ignore)]
     tokenizer: T,
     nodes: VecDeque<EagerTokenNode>,
-    useful_offset: u16,
-    num_useful_bytes: u16,
+    frontier: u16,
+    num_frontier_bytes: u16,
     num_roots: u16,
     ac_state: ACNodeId,
 }
@@ -34,8 +34,8 @@ impl IncBpeTokenizer {
         EagerBpeTokenization {
             tokenizer: self,
             nodes: Default::default(),
-            useful_offset: 0,
-            num_useful_bytes: 0,
+            frontier: 0,
+            num_frontier_bytes: 0,
             num_roots: 0,
             ac_state: AC_NODE_ROOT,
         }
@@ -59,23 +59,23 @@ impl<T> From<EagerBpeTokenization<T>> for IncBpeTokenization<T> {
 impl<T> EagerBpeTokenization<T> {
     #[inline(always)]
     fn pop_prefix_removed_nodes(&mut self) {
-        while self.useful_offset > 0
+        while self.frontier > 0
             && self
                 .nodes
                 .front()
                 .is_some_and(|i| i.num_alive_children == 0)
         {
             self.nodes.pop_front();
-            self.useful_offset -= 1;
+            self.frontier -= 1;
         }
     }
 
     #[inline(always)]
-    fn move_forward_useful_offset(&mut self) {
-        debug_assert!(self.useful_offset as usize + 1 < self.nodes.len());
-        let mut idx = self.useful_offset;
-        self.useful_offset += 1;
-        self.num_useful_bytes -= self.nodes[idx as usize].feed_len;
+    fn move_forward_frontier(&mut self) {
+        debug_assert!(self.frontier as usize + 1 < self.nodes.len());
+        let mut idx = self.frontier;
+        self.frontier += 1;
+        self.num_frontier_bytes -= self.nodes[idx as usize].feed_len;
         loop {
             let node = &self.nodes[idx as usize];
             if node.num_alive_children != 0 || idx < node.skip_len {
@@ -93,14 +93,14 @@ impl<T> EagerBpeTokenization<T> {
 
 impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
     #[inline(always)]
-    fn maintain_useful_offset(&mut self) {
+    fn maintain_frontier(&mut self) {
         let tokenizer: &IncBpeTokenizer = self.tokenizer.borrow();
-        let target_useful_bytes = tokenizer.ac_depths[self.ac_state];
-        while self.useful_offset as usize + 1 < self.nodes.len()
-            && self.num_useful_bytes
-                > target_useful_bytes + self.nodes[self.useful_offset as usize].feed_len
+        let target_frontier = tokenizer.ac_depths[self.ac_state];
+        while self.frontier as usize + 1 < self.nodes.len()
+            && self.num_frontier_bytes
+                > target_frontier + self.nodes[self.frontier as usize].feed_len
         {
-            self.move_forward_useful_offset();
+            self.move_forward_frontier();
         }
     }
 
@@ -116,7 +116,7 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
             let parent = self.nodes.len() - skip_len as usize;
             self.nodes[parent].num_alive_children += 1;
         }
-        self.num_useful_bytes += feed_len;
+        self.num_frontier_bytes += feed_len;
         self.nodes.push_back(EagerTokenNode {
             forest_id,
             token_id,
@@ -131,7 +131,7 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
     pub fn feed(&mut self, token_id: TokenId) {
         let tokenizer: &IncBpeTokenizer = self.tokenizer.borrow();
         if let Some(token) = tokenizer.get_token(token_id)
-            && tokenizer.is_useful(token_id)
+            && tokenizer.is_canonical(token_id)
         {
             #[cfg(debug_assertions)]
             {
@@ -156,12 +156,12 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
                 forest_id = tree.search(skip_to);
             }
             self.push(forest_id, feed_len);
-            self.maintain_useful_offset();
+            self.maintain_frontier();
             self.pop_prefix_removed_nodes();
         } else {
             self.ac_state = AC_NODE_ROOT;
-            while self.useful_offset as usize + 1 < self.nodes.len() {
-                self.move_forward_useful_offset();
+            while self.frontier as usize + 1 < self.nodes.len() {
+                self.move_forward_frontier();
             }
             self.pop_prefix_removed_nodes();
             if let Some(node) = self.nodes.back_mut() {
@@ -172,8 +172,8 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
                 debug_assert_eq!(self.num_roots, 0);
                 self.num_roots = 1;
             }
-            self.useful_offset = self.nodes.len() as _;
-            self.num_useful_bytes = 0;
+            self.frontier = self.nodes.len() as _;
+            self.num_frontier_bytes = 0;
             self.nodes.push_back(EagerTokenNode {
                 forest_id: FOREST_VIRTUAL_ROOT,
                 token_id,
@@ -191,8 +191,8 @@ impl<T> EagerBpeTokenization<T> {
         Self {
             tokenizer,
             nodes: Default::default(),
-            useful_offset: 0,
-            num_useful_bytes: 0,
+            frontier: 0,
+            num_frontier_bytes: 0,
             num_roots: 0,
             ac_state: AC_NODE_ROOT,
         }
@@ -201,8 +201,8 @@ impl<T> EagerBpeTokenization<T> {
     #[inline(always)]
     pub fn reset(&mut self) {
         self.nodes.clear();
-        self.useful_offset = 0;
-        self.num_useful_bytes = 0;
+        self.frontier = 0;
+        self.num_frontier_bytes = 0;
         self.num_roots = 0;
         self.ac_state = AC_NODE_ROOT;
     }
@@ -227,7 +227,7 @@ impl<T> Iterator for EagerBpeTokenization<T> {
             return None;
         }
         self.pop_prefix_removed_nodes();
-        if self.useful_offset == 0 {
+        if self.frontier == 0 {
             return None;
         }
         let EagerTokenNode {
@@ -237,7 +237,7 @@ impl<T> Iterator for EagerBpeTokenization<T> {
             skip_len,
             num_alive_children,
         } = self.nodes.pop_front()?;
-        self.useful_offset -= 1;
+        self.frontier -= 1;
         self.num_roots = num_alive_children;
         Some(IncBpeToken::const_new(token_id, skip_len))
     }
@@ -299,7 +299,7 @@ mod tests {
         );
 
         let tokenize = |s: &str| {
-            let single_tokens = if IN_BYTES {
+            let atomic_tokens = if IN_BYTES {
                 bytes_into_tokens(&tokenizer, s, 0usize)
             } else {
                 utf8_into_tokens(&tokenizer, s, 0usize)
@@ -307,14 +307,14 @@ mod tests {
 
             let mut state = tokenizer.eager();
             let mut output = Vec::new();
-            for token_id in std::iter::chain(single_tokens.iter().copied(), [TokenId::MAX]) {
+            for token_id in std::iter::chain(atomic_tokens.iter().copied(), [TokenId::MAX]) {
                 state.feed(token_id);
                 output.extend(&mut state);
             }
 
             let mut batch_state = tokenizer.eager();
             let mut batch_output = Vec::new();
-            for token_ids in std::iter::chain(single_tokens.chunks(4), [TokenId::MAX].chunks(1)) {
+            for token_ids in std::iter::chain(atomic_tokens.chunks(4), [TokenId::MAX].chunks(1)) {
                 for token_id in token_ids.iter().copied() {
                     batch_state.feed(token_id);
                 }
@@ -322,7 +322,7 @@ mod tests {
             }
             assert_eq!(output, batch_output);
 
-            validate(&tokenizer, &single_tokens, &output);
+            validate(&tokenizer, &atomic_tokens, &output);
             output
         };
 
@@ -545,7 +545,7 @@ mod tests {
                 Dictionary::new_from_token_pair(vocab.clone(), rules.iter().copied()).unwrap();
             let normalized = NormalizedDict::new_in_bytes(dict).unwrap();
             let mut expected: Vec<_> = normalized
-                .useful_rules
+                .canonical_rules
                 .values()
                 .map(|i| i.as_usize())
                 .collect();
@@ -556,7 +556,7 @@ mod tests {
                     .tokens
                     .keys()
                     .skip(1)
-                    .all(|id| normalized.is_useful(id))
+                    .all(|id| normalized.is_canonical(id))
             );
         }
         eager_bpe_display_any_case(&vocab, &rules, &sequences);

@@ -5,7 +5,7 @@ use derive_more::Deref;
 use crate::{
     SkipLen,
     aho_corasick::{AC_NODE_ROOT, ACAutomaton, ACNodeId},
-    normalize::SINGLETON_PRIORITY,
+    normalize::ATOMIC_TOKEN_PRIORITY,
     successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, SucForest},
     typed_vec::TypedVec,
 };
@@ -81,7 +81,7 @@ impl SufSucNodeSet {
                 (ForestNodeId::ZERO, ForestNodeId::MAX)
             } else {
                 debug_assert!(
-                    node.pre_id != FOREST_VIRTUAL_ROOT && node.priority < SINGLETON_PRIORITY
+                    node.pre_id != FOREST_VIRTUAL_ROOT && node.priority < ATOMIC_TOKEN_PRIORITY
                 );
                 let pre = &forest[node.pre_id];
                 let last = if pre
@@ -179,7 +179,7 @@ mod tests {
 
         let dict = Dictionary::new_from_token_pair(vocab, rules.iter().copied()).unwrap();
         let dict = NormalizedDict::new_in_bytes(dict.clone()).unwrap();
-        let automaton = ACAutomaton::new(dict.iter_useful_tokens_or_empty());
+        let automaton = ACAutomaton::new(dict.iter_canonical_or_empty_tokens());
         let forest = SucForest::new(&dict);
 
         let node_set = SufSucNodeSet::new(&forest, &automaton);
@@ -211,7 +211,7 @@ mod tests {
             let longest = dict
                 .tokens
                 .keys()
-                .filter(|&i| dict.is_useful(i) && cur_string.ends_with(&dict[i]))
+                .filter(|&i| dict.is_canonical(i) && cur_string.ends_with(&dict[i]))
                 .max_by_key(|&i| dict[i].len())
                 .map(|i| forest.token_to_node_id[i])
                 .unwrap_or(FOREST_VIRTUAL_ROOT);
@@ -230,7 +230,7 @@ mod tests {
                 .tokens
                 .keys()
                 .filter(|&i| {
-                    dict.is_useful(i) && token.ends_with(&dict[i]) && dict[i].len() < token.len()
+                    dict.is_canonical(i) && token.ends_with(&dict[i]) && dict[i].len() < token.len()
                 })
                 .max_by_key(|&i| dict[i].len())
                 .map(|i| forest.token_to_node_id[i])

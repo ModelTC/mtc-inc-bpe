@@ -119,7 +119,6 @@ mod tests {
         let tokens: Vec<_> = tokens.into_iter().map(I::into).collect();
         let inputs = bytes_into_tokens(dict, seq, 0usize);
         assert_eq!(bpe_with_heap::<true>(dict, inputs), tokens);
-        assert!(dict.is_proper_in_bytes().is_ok());
         check_properly_in_bytes(dict, seq, tokens);
     }
 
@@ -132,7 +131,6 @@ mod tests {
         let tokens: Vec<_> = tokens.into_iter().map(I::into).collect();
         let inputs = utf8_into_tokens(dict, seq, 0usize);
         assert_eq!(bpe_with_heap::<true>(dict, inputs), tokens);
-        assert!(dict.is_proper_in_utf8().is_ok());
         check_properly_in_utf8(dict, seq, tokens);
     }
 
@@ -213,62 +211,61 @@ mod tests {
             [11u32, 11, 12, 11, 11, 8],
         );
 
-        let check_single = |rules: &[(&str, &str)], seq: &str, tokens: &[u32]| {
+        let verify = |rules: &[(&str, &str)], seq: &str, tokens: &[u32]| {
             let dict = build_dict(&vocab, rules.iter().copied());
             check_in_utf8(&dict, seq, tokens.iter().copied());
         };
 
-        check_single(&[("你", "好"), ("你好", "呀")], "", &[]);
-        check_single(&[("你", "好"), ("你好", "呀")], "你", &[8]);
+        verify(&[("你", "好"), ("你好", "呀")], "", &[]);
+        verify(&[("你", "好"), ("你好", "呀")], "你", &[8]);
 
         let long_case = "好你好你好呀你好你好你";
-        check_single(
+        verify(
             &[("你", "好"), ("你好", "呀"), ("好", "你")],
             long_case,
             &[9, 11, 12, 11, 11, 8],
         );
-        check_single(
+        verify(
             &[("你", "好"), ("好", "你"), ("你好", "呀")],
             long_case,
             &[9, 11, 12, 11, 11, 8],
         );
-        check_single(
+        verify(
             &[("好", "你"), ("你", "好"), ("你好", "呀")],
             long_case,
             &[13, 13, 9, 10, 8, 13, 13],
         );
 
         let long_case = "你好你好你好呀你好你好你";
-        check_single(
+        verify(
             &[("你", "好"), ("你好", "呀"), ("好", "你")],
             long_case,
             &[11, 11, 12, 11, 11, 8],
         );
-        check_single(
+        verify(
             &[("你", "好"), ("好", "你"), ("你好", "呀")],
             long_case,
             &[11, 11, 12, 11, 11, 8],
         );
-        check_single(
+        verify(
             &[("好", "你"), ("你", "好"), ("你好", "呀")],
             long_case,
             &[8, 13, 13, 9, 10, 8, 13, 13],
         );
 
-        check_single(&[("a", "a")], "aaaaa", &[18, 18, 1]);
-        check_single(&[("a", "a")], "aaaaaa", &[18, 18, 18]);
+        verify(&[("a", "a")], "aaaaa", &[18, 18, 1]);
+        verify(&[("a", "a")], "aaaaaa", &[18, 18, 18]);
 
-        check_single(&[("a", "a"), ("aa", "a")], "aaaaa", &[18, 19]);
-        check_single(&[("a", "a"), ("aa", "a")], "aaaaaa", &[18, 18, 18]);
-        check_single(&[("a", "a"), ("aa", "a")], "aaaaaaa", &[18, 18, 19]);
+        verify(&[("a", "a"), ("aa", "a")], "aaaaa", &[18, 19]);
+        verify(&[("a", "a"), ("aa", "a")], "aaaaaa", &[18, 18, 18]);
+        verify(&[("a", "a"), ("aa", "a")], "aaaaaaa", &[18, 18, 19]);
 
-        check_single(&[("a", "a"), ("a", "aa")], "aaaaa", &[18, 18, 1]);
-        check_single(&[("a", "a"), ("a", "aa")], "aaaaaa", &[18, 18, 18]);
-        check_single(&[("a", "a"), ("a", "aa")], "aaaaaaa", &[18, 18, 18, 1]);
+        verify(&[("a", "a"), ("a", "aa")], "aaaaa", &[18, 18, 1]);
+        verify(&[("a", "a"), ("a", "aa")], "aaaaaa", &[18, 18, 18]);
+        verify(&[("a", "a"), ("a", "aa")], "aaaaaaa", &[18, 18, 18, 1]);
 
         let check_properly = |rules: &[(&str, &str)], seq: &str, tokens: &[u32]| {
             let dict = build_dict(&vocab, rules.iter().copied());
-            assert!(dict.is_proper_in_utf8().is_err());
             check_properly_in_utf8(&dict, seq, tokens.iter().copied());
         };
 

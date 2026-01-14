@@ -3,7 +3,7 @@ use tinyvec::TinyVec;
 
 use crate::{
     NormalizedDict, RuleId, TokenId,
-    normalize::SINGLETON_PRIORITY,
+    normalize::ATOMIC_TOKEN_PRIORITY,
     typed_vec::{TypedVec, typed_vec_index},
 };
 
@@ -46,9 +46,9 @@ impl SucForest {
         let mut roots = Vec::with_capacity(num_tokens.as_usize());
         let mut children = TypedVec::new_with(TokenIdVec::new(), num_tokens);
         for (token_id, rule_id) in dict.priorities.enumerate_copied() {
-            if dict.is_single(token_id) {
+            if dict.is_atomic(token_id) {
                 roots.push(token_id);
-            } else if dict.is_useful(token_id) {
+            } else if dict.is_canonical(token_id) {
                 children[dict[rule_id].suc].push(token_id);
             }
         }
@@ -121,7 +121,7 @@ impl SucForest {
                     debug_assert!(child > node_id && nodes[child].parent == node_id);
                     debug_assert!(
                         (node_id == FOREST_VIRTUAL_ROOT)
-                            ^ (nodes[child].priority < SINGLETON_PRIORITY)
+                            ^ (nodes[child].priority < ATOMIC_TOKEN_PRIORITY)
                     );
                 }
             }
@@ -149,7 +149,7 @@ impl SucForest {
             nodes[parent].children.push(node_id);
 
             let rule_id = nodes[node_id].priority;
-            if rule_id < SINGLETON_PRIORITY {
+            if rule_id < ATOMIC_TOKEN_PRIORITY {
                 debug_assert!(rule_id < dict.num_of_rules());
                 let pre_id = token_to_node_id[dict[rule_id].pre];
                 nodes[node_id].pre_id = pre_id;
@@ -162,7 +162,7 @@ impl SucForest {
             order
         } {
             let node_id = token_to_node_id[token_id];
-            if !dict.is_useful(token_id) {
+            if !dict.is_canonical(token_id) {
                 debug_assert_eq!(node_id, FOREST_VIRTUAL_ROOT);
                 continue;
             }
