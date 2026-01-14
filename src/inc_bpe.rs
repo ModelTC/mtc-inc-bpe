@@ -7,7 +7,7 @@ use crate::{
     aho_corasick::{AC_NODE_ROOT, ACAutomaton, ACNodeId, ACTransTable},
     centroid::SufSucCentroidTrees,
     successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, SucForest},
-    suf_suc::SufSucNodeSet,
+    suf_suc::{SufSucNode, SufSucNodeSet},
     typed_vec::TypedVec,
 };
 
@@ -18,13 +18,49 @@ pub struct IncBpeToken {
 }
 
 #[derive(Debug, Deref)]
+pub(crate) struct ForestData {
+    #[deref]
+    nodes: TypedVec<ForestNodeId, SufSucNode<TokenId>>,
+    #[cfg(debug_assertions)]
+    pub token_to_node_id: TypedVec<TokenId, ForestNodeId>,
+    pub longest_token_node: TypedVec<ACNodeId, ForestNodeId>,
+}
+
+impl ForestData {
+    fn extract(forest: SucForest, node_set: SufSucNodeSet) -> Self {
+        let nodes = forest
+            .keys()
+            .map(|i| {
+                let SufSucNode {
+                    repr_id: _,
+                    skip_len,
+                    suc_skip_len,
+                    valid_range,
+                } = node_set[i];
+                SufSucNode {
+                    repr_id: forest[i].token_id,
+                    skip_len,
+                    suc_skip_len,
+                    valid_range,
+                }
+            })
+            .collect();
+        Self {
+            nodes,
+            #[cfg(debug_assertions)]
+            token_to_node_id: forest.token_to_node_id,
+            longest_token_node: node_set.longest_token_node,
+        }
+    }
+}
+
+#[derive(Debug, Deref)]
 pub struct IncBpeTokenizer {
     #[deref]
     dict: NormalizedDict,
     pub(crate) trans_table: ACTransTable,
     pub(crate) ac_depths: TypedVec<ACNodeId, u16>,
-    pub(crate) forest: SucForest,
-    pub(crate) node_set: SufSucNodeSet,
+    pub(crate) forest_data: ForestData,
     pub(crate) trees: SufSucCentroidTrees,
 }
 
@@ -65,8 +101,7 @@ impl IncBpeTokenizer {
             dict,
             trans_table: automaton.trans_table,
             ac_depths: automaton.depths,
-            forest,
-            node_set,
+            forest_data: ForestData::extract(forest, node_set),
             trees,
         }
     }
@@ -138,8 +173,8 @@ impl<T: Borrow<IncBpeTokenizer>> IncBpeTokenization<T> {
         {
             #[cfg(debug_assertions)]
             {
-                let node_id = tokenizer.forest.token_to_node_id[token_id];
-                debug_assert_eq!(tokenizer.forest[node_id].skip_len, 1);
+                let node_id = tokenizer.forest_data.token_to_node_id[token_id];
+                debug_assert_eq!(tokenizer.forest_data[node_id].skip_len, 1);
             }
             self.ac_state = tokenizer.trans_table.feed(self.ac_state, token);
             let skip_to = |skip| {
@@ -150,16 +185,16 @@ impl<T: Borrow<IncBpeTokenizer>> IncBpeTokenization<T> {
                     self.forest_ids[len - skip]
                 }
             };
-            let mut forest_id = tokenizer.node_set.longest_token_node[self.ac_state];
+            let mut forest_id = tokenizer.forest_data.longest_token_node[self.ac_state];
             debug_assert_ne!(forest_id, FOREST_VIRTUAL_ROOT);
-            let node = &tokenizer.node_set[forest_id];
+            let node = &tokenizer.forest_data[forest_id];
             if (node.skip_len as usize) <= self.tokens.len() && !node.verify(skip_to) {
                 let tree = tokenizer.trees.get(forest_id);
                 forest_id = tree.search(skip_to);
             }
-            let node = &tokenizer.forest[forest_id];
+            let node = &tokenizer.forest_data[forest_id];
             (
-                IncBpeToken::const_new(node.token_id, node.skip_len),
+                IncBpeToken::const_new(node.repr_id, node.skip_len),
                 forest_id,
             )
         } else {

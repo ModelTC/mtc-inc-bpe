@@ -107,9 +107,9 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
     #[inline(always)]
     fn push(&mut self, forest_id: ForestNodeId, feed_len: u16) {
         let tokenizer: &IncBpeTokenizer = self.tokenizer.borrow();
-        let suc_node = &tokenizer.forest[forest_id];
-        let token_id = suc_node.token_id;
-        let skip_len = suc_node.skip_len;
+        let node = &tokenizer.forest_data[forest_id];
+        let token_id = node.repr_id;
+        let skip_len = node.skip_len;
         if self.nodes.len() < skip_len as usize {
             self.num_roots += 1;
         } else {
@@ -135,8 +135,8 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
         {
             #[cfg(debug_assertions)]
             {
-                let node_id = tokenizer.forest.token_to_node_id[token_id];
-                debug_assert_eq!(tokenizer.forest[node_id].skip_len, 1);
+                let node_id = tokenizer.forest_data.token_to_node_id[token_id];
+                debug_assert_eq!(tokenizer.forest_data[node_id].skip_len, 1);
             }
             self.ac_state = tokenizer.trans_table.feed(self.ac_state, token);
             let feed_len = token.len() as u16;
@@ -148,9 +148,9 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
                     self.nodes[len - skip].forest_id
                 }
             };
-            let mut forest_id = tokenizer.node_set.longest_token_node[self.ac_state];
+            let mut forest_id = tokenizer.forest_data.longest_token_node[self.ac_state];
             debug_assert_ne!(forest_id, FOREST_VIRTUAL_ROOT);
-            let node = &tokenizer.node_set[forest_id];
+            let node = &tokenizer.forest_data[forest_id];
             if (node.skip_len as usize) <= self.nodes.len() && !node.verify(skip_to) {
                 let tree = tokenizer.trees.get(forest_id);
                 forest_id = tree.search(skip_to);
