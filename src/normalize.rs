@@ -1,3 +1,5 @@
+use std::iter::FusedIterator;
+
 use derive_more::Deref;
 use rapidhash::{HashMapExt, RapidHashMap};
 use thiserror::Error;
@@ -162,6 +164,19 @@ impl NormalizedDict {
     #[inline(always)]
     pub fn is_useful(&self, token_id: TokenId) -> bool {
         self.priority(token_id) != RuleId::MAX
+    }
+
+    #[inline(always)]
+    pub fn iter_useful_tokens_or_empty(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = &[u8]> + ExactSizeIterator + FusedIterator {
+        self.tokens.enumerate().map(|(token_id, bytes)| {
+            if self.is_useful(token_id) {
+                bytes.as_ref()
+            } else {
+                &[]
+            }
+        })
     }
 }
 

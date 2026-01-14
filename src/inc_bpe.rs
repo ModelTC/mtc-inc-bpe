@@ -57,7 +57,7 @@ impl IncBpeToken {
 
 impl IncBpeTokenizer {
     pub fn new(dict: NormalizedDict) -> Self {
-        let automaton = ACAutomaton::new(&dict);
+        let automaton = ACAutomaton::new(dict.iter_useful_tokens_or_empty());
         let forest = SucForest::new(&dict);
         let node_set = SufSucNodeSet::new(&forest, &automaton);
         let trees = SufSucCentroidTrees::new(&node_set, &forest);

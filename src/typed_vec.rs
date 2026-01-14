@@ -307,8 +307,6 @@ pub(crate) use {from_usize, typed_vec_index};
 
 #[cfg(test)]
 mod tests {
-    use crate::typed_vec::typed_vec_index;
-
     typed_vec_index!(U8, u8);
     typed_vec_index!(U16, u16);
     typed_vec_index!(U32, u32);

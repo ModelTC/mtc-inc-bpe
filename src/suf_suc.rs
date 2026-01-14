@@ -178,7 +178,7 @@ mod tests {
 
         let dict = Dictionary::new_from_token_pair(vocab, rules.iter().copied()).unwrap();
         let dict = NormalizedDict::new_in_bytes(dict.clone()).unwrap();
-        let automaton = ACAutomaton::new(&dict);
+        let automaton = ACAutomaton::new(dict.iter_useful_tokens_or_empty());
         let forest = SucForest::new(&dict);
 
         let node_set = SufSucNodeSet::new(&forest, &automaton);

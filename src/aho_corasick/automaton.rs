@@ -1,7 +1,7 @@
 use derive_more::{Debug, Deref};
 
 use crate::{
-    TokenId, Vocab,
+    TokenId,
     aho_corasick::{
         AC_NODE_ROOT, ACNodeId, ACSuffixLinkTree, ACTransTable, ACTrie,
         heavy_light::heavy_light_decomposition,
@@ -21,12 +21,13 @@ pub(crate) struct ACAutomaton {
 }
 
 impl ACAutomaton {
-    pub fn new(vocab: &Vocab) -> Self {
+    pub fn new<T: AsRef<[u8]>, V: IntoIterator<Item = T>>(vocab: V) -> Self {
         let mut trie = ACTrie::default();
 
-        let mut token_to_node = TypedVec::with_capacity(vocab.num_of_tokens());
+        let vocab = vocab.into_iter();
+        let mut token_to_node = TypedVec::with_capacity(TokenId::from(vocab.size_hint().0));
 
-        for token in vocab.tokens.iter() {
+        for token in vocab {
             let mut node = AC_NODE_ROOT;
             for &byte in token.as_ref() {
                 node = trie.get_or_add(node, byte);
@@ -110,7 +111,7 @@ mod tests {
         ])
         .unwrap();
 
-        let automaton = ACAutomaton::new(&vocab);
+        let automaton = ACAutomaton::new(vocab.tokens());
 
         for node in automaton.trie.keys() {
             let suffix = automaton.suffix[node];

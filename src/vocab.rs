@@ -112,13 +112,26 @@ impl Vocab {
     }
 
     #[inline(always)]
+    pub fn find_by_byte_unchecked(&self, b: u8) -> TokenId {
+        self.u8_to_id[b as usize]
+    }
+
+    #[inline(always)]
     pub fn find_by_byte(&self, b: u8) -> Option<TokenId> {
-        Some(self.u8_to_id[b as usize]).filter(|&i| i != TokenId::MAX)
+        Some(self.find_by_byte_unchecked(b)).filter(|&i| i != TokenId::MAX)
     }
 
     #[inline(always)]
     pub fn find_by_char(&self, c: char) -> Option<TokenId> {
         self.char_to_id.get(&c).copied()
+    }
+
+    #[inline(always)]
+    pub fn split_bytes_to_tokens_unchecked(
+        &self,
+        seq: &[u8],
+    ) -> impl DoubleEndedIterator<Item = TokenId> + ExactSizeIterator + FusedIterator {
+        seq.iter().map(|&b| self.find_by_byte_unchecked(b))
     }
 
     #[inline(always)]
