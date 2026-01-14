@@ -1,4 +1,5 @@
-[workspace.package]
+[package]
+name = "mtc-incremental-bpe"
 version = "0.7.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -6,23 +7,13 @@ description = "Incremental BPE tokenization for all prefixes"
 repository = "https://github.com/ModelTC/mtc-incremental-bpe"
 homepage = "https://github.com/ModelTC/mtc-incremental-bpe"
 documentation = "https://docs.rs/mtc-incremental-bpe"
-
-[package]
-name = "mtc-incremental-bpe"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-description.workspace = true
-repository.workspace = true
-homepage.workspace = true
-documentation.workspace = true
 readme = "README.md"
 exclude = ["release-plz.toml", ".github"]
 
 [dependencies]
 bytes = { version = "1.11.0", default-features = false }
-derive_more = { version = "2.1.0", features = ["add", "constructor", "debug", "deref", "deref_mut", "display", "from", "into", "into_iterator", "is_variant", "not"] }
-rapidhash = { version = "4.1.1", default-features = false, features = ["std"] }
+derive_more = { version = "2.1.1", features = ["add", "constructor", "debug", "deref", "display", "from", "into", "into_iterator", "not"] }
+rapidhash = { version = "4.2.1", default-features = false, features = ["std"] }
 thiserror = { version = "2.0.17", default-features = false }
 tinyvec = { version = "1.10.0", default-features = false, features = ["alloc"] }
 
