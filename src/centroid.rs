@@ -1,16 +1,20 @@
-use std::collections::{BTreeMap, LinkedList};
+use std::{
+    collections::{BTreeMap, LinkedList, VecDeque},
+    ops::{Index, Range},
+};
 
 use derive_more::Deref;
 use tinyvec::TinyVec;
 
 use crate::{
-    successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, SucForest, SucNode},
+    successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, ForestNodeIdVec, SucForest, SucNode},
     suf_suc::{SufSucNode, SufSucNodeSet},
     typed_vec::{TypedVec, typed_vec_index},
 };
 
 typed_vec_index!(pub(crate) CentroidId, u16);
 typed_vec_index!(SubTreeNodeId, u16);
+typed_vec_index!(NodePoolId, u32);
 
 type IntervalVec = TinyVec<[(ForestNodeId, ForestNodeId); 4]>;
 type CentroidChildVec = TinyVec<[CentroidId; 7]>;
@@ -36,6 +40,22 @@ const _: () = {
     assert!(std::mem::size_of::<[CentroidNode; 2]>() == std::mem::size_of::<CentroidNode>() * 2);
 };
 
+#[derive(Debug, Deref)]
+pub(crate) struct SufSucCentroidTree {
+    nodes: TypedVec<CentroidId, CentroidNode>,
+}
+
+#[derive(Debug)]
+pub(crate) struct SufSucCentroidTreeView<'n> {
+    nodes: &'n [CentroidNode],
+}
+
+#[derive(Debug)]
+pub(crate) struct SufSucCentroidTrees {
+    nodes: TypedVec<NodePoolId, CentroidNode>,
+    trees: TypedVec<ForestNodeId, Range<NodePoolId>>,
+}
+
 impl CentroidNode {
     fn new(node: SubTreeNodeRef, subtree_root: SubTreeNodeId) -> Self {
         Self {
@@ -47,23 +67,47 @@ impl CentroidNode {
     }
 }
 
-#[derive(Debug, Deref)]
-pub(crate) struct SufSucCentroidTree {
-    nodes: TypedVec<CentroidId, CentroidNode>,
-}
-
-#[derive(Debug, Deref)]
-pub(crate) struct SufSucCentroidTrees {
-    trees: TypedVec<ForestNodeId, SufSucCentroidTree>,
-}
-
 impl SufSucCentroidTrees {
     pub fn new(node_set: &SufSucNodeSet, forest: &SucForest) -> Self {
-        Self {
-            trees: forest
-                .keys()
-                .map(|i| SufSucCentroidTree::new(i, node_set, forest))
-                .collect(),
+        let chain_len = {
+            let mut chain_len = TypedVec::new_with(0u16, forest.len());
+            let mut children = TypedVec::new_with(ForestNodeIdVec::new(), forest.len());
+            for node_id in forest.keys() {
+                if node_id == FOREST_VIRTUAL_ROOT {
+                    continue;
+                }
+                children[node_set.suffix_parent[node_id]].push(node_id);
+            }
+            let mut queue = VecDeque::with_capacity(forest.len().as_usize());
+            queue.push_back(FOREST_VIRTUAL_ROOT);
+            while let Some(node_id) = queue.pop_front() {
+                if node_id != FOREST_VIRTUAL_ROOT {
+                    chain_len[node_id] = chain_len[node_set.suffix_parent[node_id]] + 1;
+                }
+                queue.extend(children[node_id].iter().copied());
+            }
+            chain_len
+        };
+        let num_of_nodes = chain_len.iter().copied().map(|v| v as u32).sum();
+
+        let mut nodes = TypedVec::with_capacity(NodePoolId::new(num_of_nodes));
+        let mut trees = TypedVec::with_capacity(forest.len());
+        for forest_id in forest.keys() {
+            let tree = SufSucCentroidTree::new(forest_id, node_set, forest);
+            debug_assert_eq!(tree.len().inner(), chain_len[forest_id]);
+            let start = nodes.len();
+            nodes.extend(tree.nodes);
+            let end = nodes.len();
+            trees.push(start..end);
+        }
+        Self { nodes, trees }
+    }
+
+    #[inline(always)]
+    pub fn get(&self, forest_id: ForestNodeId) -> SufSucCentroidTreeView<'_> {
+        let range = &self.trees[forest_id];
+        SufSucCentroidTreeView {
+            nodes: &self.nodes.as_slice()[range.start.as_usize()..range.end.as_usize()],
         }
     }
 }
@@ -235,6 +279,22 @@ impl SufSucCentroidTree {
 
         Self { nodes: centroids }
     }
+}
+
+impl<'n> Index<CentroidId> for SufSucCentroidTreeView<'n> {
+    type Output = CentroidNode;
+
+    #[inline(always)]
+    fn index(&self, index: CentroidId) -> &Self::Output {
+        &self.nodes[index.as_usize()]
+    }
+}
+
+impl<'n> SufSucCentroidTreeView<'n> {
+    #[inline(always)]
+    pub fn len(&self) -> CentroidId {
+        CentroidId::from(self.nodes.len())
+    }
 
     #[inline(always)]
     pub fn search<F: Fn(usize) -> ForestNodeId>(&self, skip_to: F) -> ForestNodeId {
@@ -293,7 +353,7 @@ mod tests {
     use crate::{
         Dictionary, NormalizedDict, Vocab,
         aho_corasick::ACAutomaton,
-        centroid::SufSucCentroidTrees,
+        centroid::{CentroidId, SufSucCentroidTrees},
         successor::{FOREST_VIRTUAL_ROOT, SucForest},
         suf_suc::SufSucNodeSet,
     };
@@ -331,7 +391,7 @@ mod tests {
         let node_set = SufSucNodeSet::new(&forest, &automaton);
         let trees = SufSucCentroidTrees::new(&node_set, &forest);
 
-        for (id, tree) in trees.enumerate() {
+        for (id, tree) in forest.keys().map(|i| (i, trees.get(i))) {
             if id == FOREST_VIRTUAL_ROOT {
                 continue;
             }
@@ -342,7 +402,7 @@ mod tests {
                 .filter(|t| !t.is_empty() && token.ends_with(t))
                 .count();
             assert_eq!(num_valid_tokens, tree.len().as_usize());
-            for u in tree.keys() {
+            for u in (0..tree.len().as_usize()).map(CentroidId::from) {
                 let v = u.next();
                 if v >= tree.len() {
                     continue;

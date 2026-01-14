@@ -193,6 +193,12 @@ impl<I, T> FromIterator<T> for TypedVec<I, T> {
     }
 }
 
+impl<I, T> Extend<T> for TypedVec<I, T> {
+    fn extend<C: IntoIterator<Item = T>>(&mut self, iter: C) {
+        self.inner.extend(iter);
+    }
+}
+
 pub(crate) trait TypedVecIndex: 'static + PartialEq + PartialOrd {
     fn into_usize(self) -> usize;
     fn from_usize(val: usize) -> Self;

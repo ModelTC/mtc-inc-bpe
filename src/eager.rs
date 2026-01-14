@@ -152,7 +152,7 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
             debug_assert_ne!(forest_id, FOREST_VIRTUAL_ROOT);
             let node = &tokenizer.node_set[forest_id];
             if (node.skip_len as usize) <= self.nodes.len() && !node.verify(skip_to) {
-                let tree = &tokenizer.trees[forest_id];
+                let tree = tokenizer.trees.get(forest_id);
                 forest_id = tree.search(skip_to);
             }
             self.push(forest_id, feed_len);

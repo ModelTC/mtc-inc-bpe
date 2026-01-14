@@ -154,7 +154,7 @@ impl<T: Borrow<IncBpeTokenizer>> IncBpeTokenization<T> {
             debug_assert_ne!(forest_id, FOREST_VIRTUAL_ROOT);
             let node = &tokenizer.node_set[forest_id];
             if (node.skip_len as usize) <= self.tokens.len() && !node.verify(skip_to) {
-                let tree = &tokenizer.trees[forest_id];
+                let tree = tokenizer.trees.get(forest_id);
                 forest_id = tree.search(skip_to);
             }
             let node = &tokenizer.forest[forest_id];
