@@ -155,7 +155,7 @@ impl SufSucCentroidTree {
 
             let mut nodes = TypedVec::with_capacity(SubTreeNodeId::from(chain.len()));
             for node in chain.into_iter().rev() {
-                let forest_id = node.suf_suc_node.forest_id;
+                let forest_id = node.suf_suc_node.repr_id;
                 if node.parent == FOREST_VIRTUAL_ROOT {
                     let id = nodes.push(SubTreeNode {
                         node,
@@ -344,7 +344,7 @@ impl<'n> SufSucCentroidTreeView<'n> {
                 break;
             }
         }
-        self[current].forest_id
+        self[current].repr_id
     }
 }
 
@@ -407,13 +407,13 @@ mod tests {
                 if v >= tree.len() {
                     continue;
                 }
-                assert_ne!(tree[u].forest_id, tree[v].forest_id);
+                assert_ne!(tree[u].repr_id, tree[v].repr_id);
                 let is_parent = {
-                    let mut w = forest[tree[u].forest_id].parent;
-                    while w != FOREST_VIRTUAL_ROOT && w != tree[v].forest_id {
+                    let mut w = forest[tree[u].repr_id].parent;
+                    while w != FOREST_VIRTUAL_ROOT && w != tree[v].repr_id {
                         w = forest[w].parent;
                     }
-                    w == tree[v].forest_id
+                    w == tree[v].repr_id
                 };
                 assert!(is_parent ^ (tree[v].subtree_root != tree[u].subtree_root));
             }

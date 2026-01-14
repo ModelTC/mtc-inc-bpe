@@ -11,8 +11,8 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
-pub(crate) struct SufSucNode {
-    pub forest_id: ForestNodeId,
+pub(crate) struct SufSucNode<I = ForestNodeId> {
+    pub repr_id: I,
     pub skip_len: SkipLen,
     pub suc_skip_len: SkipLen,
     pub valid_range: (ForestNodeId, ForestNodeId),
@@ -20,9 +20,10 @@ pub(crate) struct SufSucNode {
 
 const _: () = {
     assert!(std::mem::size_of::<SufSucNode>() == 16);
+    assert!(std::mem::size_of::<SufSucNode<u32>>() == 16);
 };
 
-impl SufSucNode {
+impl<I> SufSucNode<I> {
     #[inline(always)]
     pub fn verify<F: FnOnce(usize) -> ForestNodeId>(&self, f: F) -> bool {
         self.verify_skipped(f(self.suc_skip_len as usize))
@@ -118,7 +119,7 @@ impl SufSucNodeSet {
         let nodes: TypedVec<ForestNodeId, _> = forest
             .enumerate()
             .map(|(i, node)| SufSucNode {
-                forest_id: i,
+                repr_id: i,
                 skip_len: node.skip_len,
                 suc_skip_len: forest[node.parent].skip_len,
                 valid_range: calc_valid_pre_node_id_range(i),
@@ -132,7 +133,7 @@ impl SufSucNodeSet {
                 if parent == i {
                     debug_assert_eq!(i, FOREST_VIRTUAL_ROOT);
                 }
-                debug_assert_eq!(node.forest_id, i);
+                debug_assert_eq!(node.repr_id, i);
                 debug_assert_eq!(node.skip_len, forest[i].skip_len);
                 debug_assert_eq!(node.suc_skip_len, forest[parent].skip_len);
             }
