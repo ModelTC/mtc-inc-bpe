@@ -5,6 +5,7 @@ use crate::{
     NormalizedDict, RuleId, TokenId,
     normalize::ATOMIC_TOKEN_PRIORITY,
     typed_vec::{TypedVec, typed_vec_index},
+    vocab::TokenIdVec,
 };
 
 pub type SkipLen = u16;
@@ -14,11 +15,8 @@ typed_vec_index!(pub(crate) ForestNodeId, u32);
 pub(crate) const FOREST_VIRTUAL_ROOT: ForestNodeId = ForestNodeId::ZERO;
 
 pub(crate) type ForestNodeIdVec = TinyVec<[ForestNodeId; 6]>;
-type TokenIdVec = TinyVec<[TokenId; 6]>;
-
 const _: () = {
     assert!(std::mem::size_of::<ForestNodeIdVec>() == 32);
-    assert!(std::mem::size_of::<TokenIdVec>() == 32);
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]

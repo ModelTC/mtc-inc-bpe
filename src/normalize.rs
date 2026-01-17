@@ -4,15 +4,24 @@ use derive_more::Deref;
 use rapidhash::{HashMapExt, RapidHashMap};
 use thiserror::Error;
 
-use crate::{Dictionary, RuleId, TokenId, typed_vec::TypedVec};
+use crate::{
+    Dictionary, RuleId, TokenId, bpe_with_heap, dict::RuleIdVec, typed_vec::TypedVec,
+    vocab::TokenIdVec,
+};
 
 #[derive(Clone, Debug, Error)]
 #[non_exhaustive]
 pub enum NormalizedDictBuildError {
-    #[error("atomic token {suf_token_id} is a suffix of anothor atomic token {token_id}")]
-    AtomicTokenSuffix {
+    #[error("multiple atomic token sequences for token {token_id} ({seq_a:?} vs {seq_b:?})")]
+    MultipleAtomicTokenSeq {
         token_id: TokenId,
-        suf_token_id: TokenId,
+        seq_a: Vec<TokenId>,
+        seq_b: Vec<TokenId>,
+    },
+    #[error("improper rules for token {token_id} (proper result: {proper:?})")]
+    ImproperDict {
+        token_id: TokenId,
+        proper: Vec<TokenId>,
     },
 }
 
@@ -46,12 +55,15 @@ impl NormalizedDict {
         let mut priorities = TypedVec::new_with(RuleId::MAX, capacity);
         let mut canonical_rules = RapidHashMap::with_capacity(capacity.as_usize());
 
+        let mut atomic_seq = TypedVec::new_with(TokenIdVec::new(), capacity);
+
         for (token_id, priority) in priorities.enumerate_mut() {
             let token = &dict[token_id];
             if token.is_empty() {
                 continue;
             }
             if is_atomic(&dict, token_id, token) {
+                atomic_seq[token_id].push(token_id);
                 debug_assert!(token_id.as_usize() < ATOMIC_TOKEN_PRIORITY.as_usize());
                 let mut p = ATOMIC_TOKEN_PRIORITY;
                 *p.inner_mut() += token_id.inner();
@@ -59,21 +71,42 @@ impl NormalizedDict {
             }
         }
 
-        for (token_id, rule_id) in priorities.enumerate_copied() {
-            if rule_id == RuleId::MAX {
-                continue;
-            }
-            let token = &dict[token_id];
-            for start in 1..token.len() {
-                if let Some(suf) = dict.find_token_id(&token[start..]) {
-                    if priorities[suf] == RuleId::MAX {
-                        continue;
-                    }
-                    return Err(NormalizedDictBuildError::AtomicTokenSuffix {
+        let mut token_to_rules = TypedVec::new_with(RuleIdVec::new(), capacity);
+        for (rule_id, rule) in dict.rules.enumerate() {
+            token_to_rules[rule.merged].push(rule_id);
+        }
+        for token_id in {
+            let mut order: Vec<_> = dict.tokens.keys().collect();
+            order.sort_by_key(|&i| dict[i].len());
+            order
+        } {
+            for &rule_id in &token_to_rules[token_id] {
+                let rule = &dict[rule_id];
+                let mut seq = atomic_seq[rule.pre].clone();
+                seq.extend_from_slice(&atomic_seq[rule.suc]);
+                let slot = &mut atomic_seq[token_id];
+                if !slot.is_empty() && *slot != seq {
+                    return Err(NormalizedDictBuildError::MultipleAtomicTokenSeq {
                         token_id,
-                        suf_token_id: suf,
+                        seq_a: slot.to_vec(),
+                        seq_b: seq.to_vec(),
                     });
                 }
+                *slot = seq;
+            }
+        }
+
+        for (token_id, seq) in atomic_seq.enumerate() {
+            if seq.is_empty() {
+                continue;
+            }
+            let improper = bpe_with_heap::<true>(&dict, seq.to_vec());
+            if improper != vec![token_id] {
+                continue;
+            }
+            let proper = bpe_with_heap::<false>(&dict, seq.to_vec());
+            if proper != improper {
+                return Err(NormalizedDictBuildError::ImproperDict { token_id, proper });
             }
         }
 

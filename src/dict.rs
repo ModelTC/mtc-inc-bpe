@@ -13,10 +13,9 @@ use crate::{
 
 typed_vec_index!(pub RuleId, u32);
 
-type TokenRules = TinyVec<[RuleId; 6]>;
-
+pub(crate) type RuleIdVec = TinyVec<[RuleId; 6]>;
 const _: () = {
-    assert!(std::mem::size_of::<TokenRules>() == 32);
+    assert!(std::mem::size_of::<RuleIdVec>() == 32);
 };
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Into, From)]

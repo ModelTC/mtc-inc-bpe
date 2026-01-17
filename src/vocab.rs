@@ -3,10 +3,16 @@ use std::{hash::Hash, iter::FusedIterator, ops::Index};
 use bytes::Bytes;
 use rapidhash::RapidHashMap;
 use thiserror::Error;
+use tinyvec::TinyVec;
 
 use crate::typed_vec::{TypedVec, typed_vec_index};
 
 typed_vec_index!(pub TokenId, u32);
+
+pub(crate) type TokenIdVec = TinyVec<[TokenId; 6]>;
+const _: () = {
+    assert!(std::mem::size_of::<TokenIdVec>() == 32);
+};
 
 pub type Token = Bytes;
 
