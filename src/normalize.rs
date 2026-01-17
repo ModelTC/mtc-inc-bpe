@@ -189,8 +189,8 @@ impl NormalizedDict {
 #[cfg(test)]
 mod tests {
     use crate::{
-        Dictionary, NormalizedDict, RuleId, Vocab,
-        test_utils::{bpe_with_heap, bytes_into_tokens, utf8_into_tokens},
+        Dictionary, NormalizedDict, RuleId, Vocab, bpe_with_heap,
+        test_utils::{bytes_into_tokens, utf8_into_tokens},
     };
 
     fn build_dict<T: AsRef<[u8]>, R: IntoIterator<Item = (T, T)>>(

@@ -246,8 +246,8 @@ impl<T> Iterator for EagerBpeTokenization<T> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        Dictionary, IncBpeToken, IncBpeTokenizer, NormalizedDict, TokenId, Vocab,
-        test_utils::{bpe_with_heap, bytes_into_tokens, utf8_into_tokens},
+        Dictionary, IncBpeToken, IncBpeTokenizer, NormalizedDict, TokenId, Vocab, bpe_with_heap,
+        test_utils::{bytes_into_tokens, utf8_into_tokens},
     };
 
     fn eager_bpe_any_case(vocab: &[&str], rules: &[(&str, &str)], sequences: &[&str]) {

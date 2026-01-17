@@ -4,6 +4,7 @@ mod dict;
 mod eager;
 mod inc_bpe;
 mod normalize;
+mod sp_impl;
 mod successor;
 mod suf_suc;
 mod typed_vec;
@@ -14,6 +15,7 @@ pub use crate::{
     eager::EagerBpeTokenization,
     inc_bpe::{IncBpeToken, IncBpeTokenChainIter, IncBpeTokenization, IncBpeTokenizer},
     normalize::{NormalizedDict, NormalizedDictBuildError},
+    sp_impl::bpe_with_heap,
     successor::SkipLen,
     vocab::{MAX_TOKEN_LENGTH, Token, TokenId, Vocab, VocabBuildError},
 };

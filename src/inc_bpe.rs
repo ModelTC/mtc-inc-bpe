@@ -283,8 +283,8 @@ mod tests {
 
     use crate::{
         Dictionary, IncBpeToken, IncBpeTokenChainIter, IncBpeTokenizer, NormalizedDict, TokenId,
-        Vocab,
-        test_utils::{bpe_with_heap, bytes_into_tokens, utf8_into_tokens},
+        Vocab, bpe_with_heap,
+        test_utils::{bytes_into_tokens, utf8_into_tokens},
     };
 
     fn inc_bpe_short_any_case(vocab: &[&str], rules: &[(&str, &str)], sequences: &[&str]) {
