@@ -55,7 +55,7 @@ impl NormalizedDict {
         let mut priorities = TypedVec::new_with(RuleId::MAX, capacity);
         let mut canonical_rules = RapidHashMap::with_capacity(capacity.as_usize());
 
-        let mut atomic_seq = TypedVec::new_with(TokenIdVec::new(), capacity);
+        let mut atomic_seqs = TypedVec::new_with(TokenIdVec::new(), capacity);
 
         for (token_id, priority) in priorities.enumerate_mut() {
             let token = &dict[token_id];
@@ -63,7 +63,7 @@ impl NormalizedDict {
                 continue;
             }
             if is_atomic(&dict, token_id, token) {
-                atomic_seq[token_id].push(token_id);
+                atomic_seqs[token_id].push(token_id);
                 debug_assert!(token_id.as_usize() < ATOMIC_TOKEN_PRIORITY.as_usize());
                 let mut p = ATOMIC_TOKEN_PRIORITY;
                 *p.inner_mut() += token_id.inner();
@@ -82,9 +82,9 @@ impl NormalizedDict {
         } {
             for &rule_id in &token_to_rules[token_id] {
                 let rule = &dict[rule_id];
-                let mut seq = atomic_seq[rule.pre].clone();
-                seq.extend_from_slice(&atomic_seq[rule.suc]);
-                let slot = &mut atomic_seq[token_id];
+                let mut seq = atomic_seqs[rule.pre].clone();
+                seq.extend_from_slice(&atomic_seqs[rule.suc]);
+                let slot = &mut atomic_seqs[token_id];
                 if !slot.is_empty() && *slot != seq {
                     return Err(NormalizedDictBuildError::MultipleAtomicTokenSeq {
                         token_id,
@@ -95,8 +95,9 @@ impl NormalizedDict {
                 *slot = seq;
             }
         }
+        drop(token_to_rules);
 
-        for (token_id, seq) in atomic_seq.enumerate() {
+        for (token_id, seq) in atomic_seqs.enumerate() {
             if seq.is_empty() {
                 continue;
             }
@@ -109,6 +110,7 @@ impl NormalizedDict {
                 return Err(NormalizedDictBuildError::ImproperDict { token_id, proper });
             }
         }
+        drop(atomic_seqs);
 
         'outer: for (id, rule) in dict.rules.enumerate() {
             let mut left = priorities[rule.pre];

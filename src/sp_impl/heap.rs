@@ -152,31 +152,28 @@ where
     }
 
     pub fn new<T: IntoIterator<Item = (Pos, Key)>>(pos_size: Pos, iter: T) -> Self {
-        let mut nodes = TypedVec::<NodeId, _>::from_iter(
+        let nodes = TypedVec::<NodeId, _>::from_iter(
             [Default::default()]
                 .into_iter()
                 .chain(iter.into_iter().map(|(u, v)| (v, u))),
         );
-
-        let mut cur = nodes.len().prev();
-        while let parent = cur.parent()
-            && !parent.is_nil()
-        {
-            if nodes[cur] < nodes[parent] {
-                nodes.swap(parent, cur);
-            }
-            cur = cur.prev();
-        }
-
         let mut pos_to_node_id = TypedVec::new_with(NodeId::ZERO, pos_size);
         for (node_id, (_, pos)) in nodes.enumerate().skip(1) {
             pos_to_node_id[*pos] = node_id;
         }
-
-        Self {
+        let mut result = Self {
             nodes,
             pos_to_node_id,
+        };
+
+        for i in result.nodes.keys().rev() {
+            if i < ROOT {
+                break;
+            }
+            result.move_down(i);
         }
+
+        result
     }
 }
 

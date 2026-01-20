@@ -109,6 +109,7 @@ impl SucForest {
                 stack.push((Some(child), 0usize));
             }
         }
+        drop(children);
 
         for node_id in nodes.keys().rev() {
             nodes[node_id].children.reverse();
