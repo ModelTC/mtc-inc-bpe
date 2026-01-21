@@ -12,10 +12,17 @@ pub fn bpe_with_heap<const ALLOW_IMPROPER_RULES: bool>(
     dict: &Dictionary,
     seq: impl Into<Vec<TokenId>>,
 ) -> Vec<TokenId> {
+    bpe_with_heap_last_merge::<ALLOW_IMPROPER_RULES>(dict, seq).0
+}
+
+pub fn bpe_with_heap_last_merge<const ALLOW_IMPROPER_RULES: bool>(
+    dict: &Dictionary,
+    seq: impl Into<Vec<TokenId>>,
+) -> (Vec<TokenId>, Option<RuleId>) {
     let seq = seq.into();
     let seq_len = seq.len();
     if seq_len <= 1 {
-        return seq;
+        return (seq, None);
     }
 
     let mut next_split_pos: TypedVec<InputTextPos, _> =
@@ -43,7 +50,9 @@ pub fn bpe_with_heap<const ALLOW_IMPROPER_RULES: bool>(
             }),
     );
 
+    let mut last_merge = None;
     while let Some((pos, rule_id)) = heap.pop() {
+        last_merge = Some(rule_id);
         let rule = &dict[rule_id];
 
         debug_assert!(
@@ -93,7 +102,7 @@ pub fn bpe_with_heap<const ALLOW_IMPROPER_RULES: bool>(
         res.push(seq[cur]);
         cur = next_split_pos[cur];
     }
-    res
+    (res, last_merge)
 }
 
 #[cfg(test)]

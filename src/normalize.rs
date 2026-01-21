@@ -5,7 +5,7 @@ use rapidhash::{HashMapExt, RapidHashMap};
 use thiserror::Error;
 
 use crate::{
-    Dictionary, RuleId, TokenId, bpe_with_heap, dict::RuleIdVec, typed_vec::TypedVec,
+    Dictionary, RuleId, TokenId, bpe_with_heap_last_merge, dict::RuleIdVec, typed_vec::TypedVec,
     vocab::TokenIdVec,
 };
 
@@ -97,17 +97,24 @@ impl NormalizedDict {
         }
         drop(token_to_rules);
 
+        let mut validation = TypedVec::new_with(false, dict.num_of_rules());
         for (token_id, seq) in atomic_seqs.enumerate() {
             if seq.is_empty() {
                 continue;
             }
-            let improper = bpe_with_heap::<true>(&dict, seq.to_vec());
-            if improper != vec![token_id] {
+            let improper = bpe_with_heap_last_merge::<true>(&dict, seq.to_vec());
+            if improper.0 != vec![token_id] {
                 continue;
             }
-            let proper = bpe_with_heap::<false>(&dict, seq.to_vec());
+            let proper = bpe_with_heap_last_merge::<false>(&dict, seq.to_vec());
             if proper != improper {
-                return Err(NormalizedDictBuildError::ImproperDict { token_id, proper });
+                return Err(NormalizedDictBuildError::ImproperDict {
+                    token_id,
+                    proper: proper.0,
+                });
+            }
+            if let Some(last_rule_id) = proper.1 {
+                validation[last_rule_id] = true;
             }
         }
         drop(atomic_seqs);
@@ -164,7 +171,11 @@ impl NormalizedDict {
             priorities[rule.merged] = id;
             let res = canonical_rules.insert((rule.pre, rule.suc), id);
             debug_assert!(res.is_none());
+            debug_assert!(validation[id]);
+            validation[id] = false;
         }
+
+        debug_assert!(validation.into_iter().all(|i| !i));
 
         Ok(Self {
             dict,

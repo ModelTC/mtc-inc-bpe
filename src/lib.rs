@@ -15,7 +15,7 @@ pub use crate::{
     eager::EagerBpeTokenization,
     inc_bpe::{IncBpeToken, IncBpeTokenChainIter, IncBpeTokenization, IncBpeTokenizer},
     normalize::{NormalizedDict, NormalizedDictBuildError},
-    sp_impl::bpe_with_heap,
+    sp_impl::{bpe_with_heap, bpe_with_heap_last_merge},
     successor::SkipLen,
     vocab::{MAX_TOKEN_LENGTH, Token, TokenId, Vocab, VocabBuildError},
 };
