@@ -7,6 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0](https://github.com/ModelTC/mtc-incremental-bpe/releases/tag/v0.8.0) - 2026-01-21
+
+### Added
+
+- add a script to properize tokenizers
+- add more assertions when checking properness
+- check if dict is proper before normalization
+- expose heap implementation
+- use canonical tokens for automaton and add a shortcut byte to token lookup method
+- [**breaking**] add eager tokenization
+- expose byte and char lookup operations
+- support empty tokens
+- add built-in byte and char lookup tables to `Vocab`
+- heavy light decomposition
+- [**breaking**] rename functions and expose more for `IncBpeTokenization`
+- [**breaking**] expose position in `IncBpeTokenChainIter`
+- [**breaking**] make `NormalizedDict::new` return `Result`, adjust several interfaces
+- expose IncBpeTokenChainIter
+- [**breaking**] fetch token chain using iterator instead of vec for performance
+- [**breaking**] expose more context when checking if a token is single
+- init
+
+### Fixed
+
+- *(tests)* handle errors when improper
+- *(heap)* fix bugs in heap implementation
+- [**breaking**] refine naming, update interface and remove redundant code
+- extract essential forest data for tokenization, keep memory usage minimized
+- allow setting different repr_id in SufSucNode
+- inline more functions
+- remove `EagerBpeToken`, `feed_len` is useless for external users
+- use rapidhash instead of default hash
+- move byte to token id table to heap
+- use the roots of the subtrees as indicators of parents, fix #19
+- expose priority of a token in normalized dict, fix panic when token id exceeded vocab size
+- use `LinkedList` for suffix chain
+- check token length explicitly
+- add `non_exhaustive` to errors
+- use u16 as `skip_len`
+- expose `NormalizedDictBuildError`
+
+### Other
+
+- update thiserror
+- bump version to v0.8.0
+- use a big node pool for centroid decomposition
+- *(cargo)* update dependencies and metadata
+- release v0.7.1
+- *(format)* format the code
+- disable default features of dependencies
+- release v0.7.0
+- release v0.6.0
+- make use of type inference
+- remove `two_diff_mut` from `TypedVec`
+- remove authors field in Cargo.toml
+- *(tests)* move heap bpe into test utils
+- *(deps)* update `derive_more`
+- keep transition table in the order of heavy chains
+- *(aho_corasik)* use sqrt decomposition to reduce memory footprint
+- release v0.5.0
+- use `tinyvec` replacing `smallvec` to reduce memory footprint
+- *(tests)* add tests on repeated characters
+- unify integer literals
+- release v0.4.1 ([#18](https://github.com/ModelTC/mtc-incremental-bpe/pull/18))
+- optimize constructors in debug mode ([#17](https://github.com/ModelTC/mtc-incremental-bpe/pull/17))
+- *(ci)* add auto-merge dependabot PR
+- *(deps)* bump actions/checkout from 5 to 6
+- release v0.4.0
+- release v0.3.1
+- release v0.3.0
+- rename parameters for clarity
+- release v0.2.1
+- release v0.2.0
+- clean up code
+- optimize validation to reduce execution time
+- pre-allocate vector whenever possible
+- reorder functions
+- update package name ([#4](https://github.com/ModelTC/mtc-incremental-bpe/pull/4))
+- release v0.1.0 ([#3](https://github.com/ModelTC/mtc-incremental-bpe/pull/3))
+- add more events to trigger build and test ([#2](https://github.com/ModelTC/mtc-incremental-bpe/pull/2))
+
 ## [0.7.1](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.7.0...v0.7.1) - 2026-01-05
 
 ### Fixed
