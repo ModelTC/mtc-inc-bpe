@@ -282,8 +282,8 @@ mod tests {
     use std::{borrow::Borrow, sync::Arc};
 
     use crate::{
-        Dictionary, IncBpeToken, IncBpeTokenChainIter, IncBpeTokenizer, NormalizedDict, TokenId,
-        Vocab, bpe_with_heap,
+        Dictionary, IncBpeToken, IncBpeTokenChainIter, IncBpeTokenizer, NormalizedDict,
+        NormalizedDictBuildError, TokenId, Vocab, bpe_with_heap,
         test_utils::{bytes_into_tokens, utf8_into_tokens},
     };
 
@@ -330,12 +330,21 @@ mod tests {
         let vocab = Vocab::new(vocab.iter().map(|&s| s.to_owned())).unwrap();
         let dict = Dictionary::new_from_token_pair(vocab, rules.iter().copied()).unwrap();
         let tokenizer = IncBpeTokenizer::new(
-            if IN_BYTES {
+            match if IN_BYTES {
                 NormalizedDict::new_in_bytes
             } else {
                 NormalizedDict::new_in_utf8
             }(dict)
-            .unwrap(),
+            {
+                Ok(dict) => dict,
+                Err(NormalizedDictBuildError::ImproperDict { .. }) => {
+                    return;
+                }
+                Err(e) => {
+                    dbg!(e);
+                    unreachable!();
+                }
+            },
         );
 
         let tokenize = |s: &str| {

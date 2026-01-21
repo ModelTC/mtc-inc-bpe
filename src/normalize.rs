@@ -82,6 +82,9 @@ impl NormalizedDict {
         } {
             for &rule_id in &token_to_rules[token_id] {
                 let rule = &dict[rule_id];
+                if atomic_seqs[rule.pre].is_empty() || atomic_seqs[rule.suc].is_empty() {
+                    continue;
+                }
                 let mut seq = atomic_seqs[rule.pre].clone();
                 seq.extend_from_slice(&atomic_seqs[rule.suc]);
                 let slot = &mut atomic_seqs[token_id];
@@ -235,7 +238,7 @@ impl NormalizedDict {
 #[cfg(test)]
 mod tests {
     use crate::{
-        Dictionary, NormalizedDict, RuleId, Vocab, bpe_with_heap,
+        Dictionary, NormalizedDict, NormalizedDictBuildError, RuleId, Vocab, bpe_with_heap,
         test_utils::{bytes_into_tokens, utf8_into_tokens},
     };
 
@@ -246,8 +249,17 @@ mod tests {
         Dictionary::new_from_token_pair(vocab.clone(), rules).unwrap()
     }
 
-    fn build_in_bytes(dict: &Dictionary) -> NormalizedDict {
-        let dict = NormalizedDict::new_in_bytes(dict.clone()).unwrap();
+    fn build_in_bytes(dict: &Dictionary) -> Option<NormalizedDict> {
+        let dict = match NormalizedDict::new_in_bytes(dict.clone()) {
+            Ok(dict) => dict,
+            Err(NormalizedDictBuildError::ImproperDict { .. }) => {
+                return None;
+            }
+            Err(e) => {
+                dbg!(e);
+                unreachable!();
+            }
+        };
         for rule in &dict.rules {
             let token_id = rule.merged;
             assert!(!dict.is_atomic(token_id));
@@ -255,11 +267,20 @@ mod tests {
             let res = bpe_with_heap::<false>(&dict, bytes_into_tokens(&dict, seq, 0usize));
             assert!(dict.is_canonical(token_id) ^ (res != vec![token_id]));
         }
-        dict
+        Some(dict)
     }
 
-    fn build_in_utf8(dict: &Dictionary) -> NormalizedDict {
-        let dict = NormalizedDict::new_in_utf8(dict.clone()).unwrap();
+    fn build_in_utf8(dict: &Dictionary) -> Option<NormalizedDict> {
+        let dict = match NormalizedDict::new_in_utf8(dict.clone()) {
+            Ok(dict) => dict,
+            Err(NormalizedDictBuildError::ImproperDict { .. }) => {
+                return None;
+            }
+            Err(e) => {
+                dbg!(e);
+                unreachable!();
+            }
+        };
         for rule in &dict.rules {
             let token_id = rule.merged;
             let seq = match std::str::from_utf8(&dict[token_id]) {
@@ -273,7 +294,7 @@ mod tests {
             let res = bpe_with_heap::<false>(&dict, utf8_into_tokens(&dict, seq, 0usize));
             assert!(dict.is_canonical(token_id) ^ (res != vec![token_id]));
         }
-        dict
+        Some(dict)
     }
 
     fn canonical_rules<R: IntoIterator<Item = u32>>(dict: &NormalizedDict, rules: R) {
@@ -284,15 +305,13 @@ mod tests {
         assert_eq!(rules, expected);
     }
 
-    fn build_and_test_rules<R: IntoIterator<Item = u32> + Clone>(
-        dict: &Dictionary,
-        rules: R,
-    ) -> NormalizedDict {
-        let normalized = build_in_bytes(dict);
-        canonical_rules(&normalized, rules.clone());
-        let normalized = build_in_utf8(dict);
-        canonical_rules(&normalized, rules);
-        normalized
+    fn build_and_test_rules<R: IntoIterator<Item = u32> + Clone>(dict: &Dictionary, rules: R) {
+        if let Some(normalized) = build_in_bytes(dict) {
+            canonical_rules(&normalized, rules.clone());
+        }
+        if let Some(normalized) = build_in_utf8(dict) {
+            canonical_rules(&normalized, rules);
+        }
     }
 
     #[test]
@@ -330,7 +349,7 @@ mod tests {
             &vocab,
             [(b"\xbd" as &[_], b"\xa0" as &[_]), (b"\xe4", b"\xbd\xa0")],
         );
-        let normalized = build_in_bytes(&dict);
+        let normalized = build_in_bytes(&dict).unwrap();
         canonical_rules(&normalized, [0, 1]);
 
         let dict = build_dict(&vocab, [("aa", "a"), ("a", "a")]);
@@ -393,26 +412,23 @@ mod tests {
         build_and_test_rules(&dict, [0, 1, 2, 4]);
 
         let dict = build_dict(&vocab, [("你", "好"), ("你好", "呀")]);
-        let normalized = build_in_utf8(&dict);
+        let normalized = build_in_utf8(&dict).unwrap();
         canonical_rules(&normalized, [0, 1]);
         let dict = build_dict(&vocab, [("你", "好"), ("你好", "呀"), ("好", "你")]);
-        let normalized = build_in_utf8(&dict);
+        let normalized = build_in_utf8(&dict).unwrap();
         canonical_rules(&normalized, [0, 1, 2]);
         let dict = build_dict(&vocab, [("你", "好"), ("好", "你"), ("你好", "呀")]);
-        let normalized = build_in_utf8(&dict);
+        let normalized = build_in_utf8(&dict).unwrap();
         canonical_rules(&normalized, [0, 1, 2]);
         let dict = build_dict(&vocab, [("好", "你"), ("你", "好"), ("你好", "呀")]);
-        let normalized = build_in_utf8(&dict);
+        let normalized = build_in_utf8(&dict).unwrap();
         canonical_rules(&normalized, [0, 1, 2]);
         let dict = build_dict(&vocab, [("你好", "呀"), ("你", "好"), ("好", "你")]);
-        let normalized = build_in_utf8(&dict);
-        canonical_rules(&normalized, [1, 2]);
+        assert!(build_in_utf8(&dict).is_none());
         let dict = build_dict(&vocab, [("你好", "呀"), ("好", "你"), ("你", "好")]);
-        let normalized = build_in_utf8(&dict);
-        canonical_rules(&normalized, [1, 2]);
+        assert!(build_in_utf8(&dict).is_none());
         let dict = build_dict(&vocab, [("好", "你"), ("你好", "呀"), ("你", "好")]);
-        let normalized = build_in_utf8(&dict);
-        canonical_rules(&normalized, [0, 2]);
+        assert!(build_in_utf8(&dict).is_none());
 
         let vocab = Vocab::new([
             b"" as &[_],
@@ -482,9 +498,11 @@ mod tests {
     fn test_normalized_dict_invalid() {
         let dict = Dictionary::new_from_id_pair(
             Vocab::new([b"a" as &[_], b"aa"]).unwrap(),
-            [] as [(usize, usize); _],
+            [(0usize, 0usize)],
         )
         .unwrap();
+        let res = NormalizedDict::new(dict.clone(), |_, _, b| b.len() == 1);
+        assert!(res.is_ok());
         let res = NormalizedDict::new(dict, |_, _, _| true);
         assert!(res.is_err());
     }
