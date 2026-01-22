@@ -8,7 +8,7 @@ repository = "https://github.com/ModelTC/mtc-incremental-bpe"
 homepage = "https://github.com/ModelTC/mtc-incremental-bpe"
 documentation = "https://docs.rs/mtc-incremental-bpe"
 readme = "README.md"
-exclude = ["release-plz.toml", ".github"]
+exclude = ["release-plz.toml", ".github", "tools"]
 
 [dependencies]
 bytes = { version = "1.11.0", default-features = false }
