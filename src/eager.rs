@@ -209,7 +209,7 @@ impl<T> EagerBpeTokenization<T> {
 
     #[inline(always)]
     pub fn reserve(&mut self, additional: usize) {
-        self.nodes.reserve(additional);
+        self.nodes.reserve(additional + 1);
     }
 
     #[inline(always)]
