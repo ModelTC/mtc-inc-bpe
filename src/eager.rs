@@ -22,8 +22,8 @@ pub struct EagerBpeTokenization<T> {
     #[debug(ignore)]
     tokenizer: T,
     nodes: VecDeque<EagerTokenNode>,
-    frontier: u16,
-    num_frontier_bytes: u16,
+    frontier: usize,
+    num_frontier_bytes: usize,
     num_roots: u16,
     ac_state: ACNodeId,
 }
@@ -72,21 +72,21 @@ impl<T> EagerBpeTokenization<T> {
 
     #[inline(always)]
     fn move_forward_frontier(&mut self) {
-        debug_assert!(self.frontier as usize + 1 < self.nodes.len());
+        debug_assert!(self.frontier + 1 < self.nodes.len());
         let mut idx = self.frontier;
         self.frontier += 1;
-        self.num_frontier_bytes -= self.nodes[idx as usize].feed_len;
+        self.num_frontier_bytes -= self.nodes[idx].feed_len as usize;
         loop {
-            let node = &self.nodes[idx as usize];
-            if node.num_alive_children != 0 || idx < node.skip_len {
+            let node = &self.nodes[idx];
+            if node.num_alive_children != 0 || idx < node.skip_len as usize {
                 if node.num_alive_children == 0 {
                     debug_assert!(self.num_roots > 1);
                     self.num_roots -= 1;
                 }
                 break;
             }
-            idx -= node.skip_len;
-            self.nodes[idx as usize].num_alive_children -= 1;
+            idx -= node.skip_len as usize;
+            self.nodes[idx].num_alive_children -= 1;
         }
     }
 }
@@ -96,9 +96,9 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
     fn maintain_frontier(&mut self) {
         let tokenizer: &IncBpeTokenizer = self.tokenizer.borrow();
         let target_frontier = tokenizer.ac_depths[self.ac_state];
-        while self.frontier as usize + 1 < self.nodes.len()
+        while self.frontier + 1 < self.nodes.len()
             && self.num_frontier_bytes
-                > target_frontier + self.nodes[self.frontier as usize].feed_len
+                > target_frontier as usize + self.nodes[self.frontier].feed_len as usize
         {
             self.move_forward_frontier();
         }
@@ -116,7 +116,7 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
             let parent = self.nodes.len() - skip_len as usize;
             self.nodes[parent].num_alive_children += 1;
         }
-        self.num_frontier_bytes += feed_len;
+        self.num_frontier_bytes += feed_len as usize;
         self.nodes.push_back(EagerTokenNode {
             forest_id,
             token_id,
@@ -160,7 +160,7 @@ impl<T: Borrow<IncBpeTokenizer>> EagerBpeTokenization<T> {
             self.pop_prefix_removed_nodes();
         } else {
             self.ac_state = AC_NODE_ROOT;
-            while self.frontier as usize + 1 < self.nodes.len() {
+            while self.frontier + 1 < self.nodes.len() {
                 self.move_forward_frontier();
             }
             self.pop_prefix_removed_nodes();
