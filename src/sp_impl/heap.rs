@@ -179,7 +179,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use rand::{Rng, SeedableRng, rngs::StdRng};
+    use rand::{RngExt, SeedableRng, rngs::StdRng};
 
     use crate::{
         sp_impl::heap::AdjustableHeap,
