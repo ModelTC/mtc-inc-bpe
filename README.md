@@ -1,9 +1,9 @@
-# mtc-incremental-bpe
+# mtc-inc-bpe
 
-[![Crates.io](https://img.shields.io/crates/v/mtc-incremental-bpe.svg)](https://crates.io/crates/mtc-incremental-bpe)
-[![Docs.rs](https://img.shields.io/docsrs/mtc-incremental-bpe.svg)](https://docs.rs/mtc-incremental-bpe)
+[![Crates.io](https://img.shields.io/crates/v/mtc-inc-bpe.svg)](https://crates.io/crates/mtc-inc-bpe)
+[![Docs.rs](https://img.shields.io/docsrs/mtc-inc-bpe.svg)](https://docs.rs/mtc-inc-bpe)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-informational.svg)](#license)
-[![Build status](https://github.com/ModelTC/mtc-incremental-bpe/actions/workflows/ci.yml/badge.svg)](https://github.com/ModelTC/mtc-incremental-bpe/actions)
+[![Build status](https://github.com/ModelTC/mtc-inc-bpe/actions/workflows/ci.yml/badge.svg)](https://github.com/ModelTC/mtc-inc-bpe/actions)
 
 Incremental BPE tokenization for all prefixes.
 

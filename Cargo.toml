@@ -1,12 +1,12 @@
 [package]
-name = "mtc-incremental-bpe"
-version = "0.8.1"
+name = "mtc-inc-bpe"
+version = "0.9.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Incremental BPE tokenization for all prefixes"
-repository = "https://github.com/ModelTC/mtc-incremental-bpe"
-homepage = "https://github.com/ModelTC/mtc-incremental-bpe"
-documentation = "https://docs.rs/mtc-incremental-bpe"
+repository = "https://github.com/ModelTC/mtc-inc-bpe"
+homepage = "https://github.com/ModelTC/mtc-inc-bpe"
+documentation = "https://docs.rs/mtc-inc-bpe"
 readme = "README.md"
 exclude = ["release-plz.toml", ".github", "tools"]
 
