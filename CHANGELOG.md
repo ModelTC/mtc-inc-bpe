@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.1](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.7.0...v0.7.1) - 2026-01-05
+## [0.7.1](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.7.0...v0.7.1) - 2026-01-05
 
 ### Fixed
 
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(format)* format the code
 - disable default features of dependencies
 
-## [0.7.0](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.6.0...v0.7.0) - 2025-12-09
+## [0.7.0](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.6.0...v0.7.0) - 2025-12-09
 
 ### Added
 
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - remove `EagerBpeToken`, `feed_len` is useless for external users
 
-## [0.6.0](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.5.0...v0.6.0) - 2025-12-08
+## [0.6.0](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.5.0...v0.6.0) - 2025-12-08
 
 ### Added
 
@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - keep transition table in the order of heavy chains
 - *(aho_corasik)* use sqrt decomposition to reduce memory footprint
 
-## [0.5.0](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.4.1...v0.5.0) - 2025-11-28
+## [0.5.0](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.4.1...v0.5.0) - 2025-11-28
 
 ### Added
 
@@ -73,25 +73,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(tests)* add tests on repeated characters
 - unify integer literals
 
-## [0.4.1](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.4.0...v0.4.1) - 2025-11-27
+## [0.4.1](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.4.0...v0.4.1) - 2025-11-27
 
 ### Other
 
-- optimize constructors in debug mode ([#17](https://github.com/ModelTC/mtc-incremental-bpe/pull/17))
+- optimize constructors in debug mode ([#17](https://github.com/ModelTC/mtc-inc-bpe/pull/17))
 
-## [0.4.0](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.3.1...v0.4.0) - 2025-11-20
+## [0.4.0](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.3.1...v0.4.0) - 2025-11-20
 
 ### Added
 
 - [**breaking**] expose position in `IncBpeTokenChainIter`
 
-## [0.3.1](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.3.0...v0.3.1) - 2025-11-19
+## [0.3.1](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.3.0...v0.3.1) - 2025-11-19
 
 ### Fixed
 
 - expose `NormalizedDictBuildError`
 
-## [0.3.0](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.2.1...v0.3.0) - 2025-11-19
+## [0.3.0](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.2.1...v0.3.0) - 2025-11-19
 
 ### Added
 
@@ -101,13 +101,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - rename parameters for clarity
 
-## [0.2.1](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.2.0...v0.2.1) - 2025-11-18
+## [0.2.1](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.2.0...v0.2.1) - 2025-11-18
 
 ### Added
 
 - expose IncBpeTokenChainIter
 
-## [0.2.0](https://github.com/ModelTC/mtc-incremental-bpe/compare/v0.1.0...v0.2.0) - 2025-11-18
+## [0.2.0](https://github.com/ModelTC/mtc-inc-bpe/compare/v0.1.0...v0.2.0) - 2025-11-18
 
 ### Added
 
@@ -121,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pre-allocate vector whenever possible
 - reorder functions
 
-## [0.1.0](https://github.com/ModelTC/mtc-incremental-bpe/releases/tag/v0.1.0) - 2025-11-17
+## [0.1.0](https://github.com/ModelTC/mtc-inc-bpe/releases/tag/v0.1.0) - 2025-11-17
 
 ### Added
 
@@ -129,4 +129,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- add more events to trigger build and test ([#2](https://github.com/ModelTC/mtc-incremental-bpe/pull/2))
+- add more events to trigger build and test ([#2](https://github.com/ModelTC/mtc-inc-bpe/pull/2))
