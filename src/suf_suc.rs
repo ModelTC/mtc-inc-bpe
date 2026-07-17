@@ -2,13 +2,11 @@ use std::collections::VecDeque;
 
 use derive_more::Deref;
 
-use crate::{
-    SkipLen,
-    aho_corasick::{AC_NODE_ROOT, ACAutomaton, ACNodeId},
-    normalize::ATOMIC_TOKEN_PRIORITY,
-    successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, SucForest},
-    typed_vec::TypedVec,
-};
+use crate::SkipLen;
+use crate::aho_corasick::{AC_NODE_ROOT, ACAutomaton, ACNodeId};
+use crate::normalize::ATOMIC_TOKEN_PRIORITY;
+use crate::successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, SucForest};
+use crate::typed_vec::TypedVec;
 
 #[derive(Clone, Debug)]
 pub(crate) struct SufSucNode<I = ForestNodeId> {
@@ -167,12 +165,10 @@ impl SufSucNodeSet {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        Dictionary, NormalizedDict, Vocab,
-        aho_corasick::{AC_NODE_ROOT, ACAutomaton},
-        successor::{FOREST_VIRTUAL_ROOT, SucForest},
-        suf_suc::SufSucNodeSet,
-    };
+    use crate::aho_corasick::{AC_NODE_ROOT, ACAutomaton};
+    use crate::successor::{FOREST_VIRTUAL_ROOT, SucForest};
+    use crate::suf_suc::SufSucNodeSet;
+    use crate::{Dictionary, NormalizedDict, Vocab};
 
     fn node_set_case(vocab: &[&str], rules: &[(&str, &str)]) {
         let vocab = Vocab::new(vocab.iter().map(|s| s.as_bytes().to_vec())).unwrap();

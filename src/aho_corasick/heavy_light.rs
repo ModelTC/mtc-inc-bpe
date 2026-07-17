@@ -1,7 +1,6 @@
-use crate::{
-    aho_corasick::{AC_NODE_ROOT, ACNodeId, ACTrie, relabeling::Relabeling},
-    typed_vec::{TypedVec, vec_with_head},
-};
+use crate::aho_corasick::relabeling::Relabeling;
+use crate::aho_corasick::{AC_NODE_ROOT, ACNodeId, ACTrie};
+use crate::typed_vec::{TypedVec, vec_with_head};
 
 pub(super) fn heavy_light_decomposition(trie: &ACTrie) -> Relabeling<ACNodeId> {
     let len = trie.len();
@@ -56,9 +55,8 @@ pub(super) fn heavy_light_decomposition(trie: &ACTrie) -> Relabeling<ACNodeId> {
 
 #[cfg(test)]
 mod tests {
-    use crate::aho_corasick::{
-        AC_NODE_ROOT, ACNodeId, ACTrie, heavy_light::heavy_light_decomposition,
-    };
+    use crate::aho_corasick::heavy_light::heavy_light_decomposition;
+    use crate::aho_corasick::{AC_NODE_ROOT, ACNodeId, ACTrie};
 
     #[test]
     fn test_ac_trie_heavy_light_decomposition() {

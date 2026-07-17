@@ -1,12 +1,11 @@
-use std::{borrow::Borrow, collections::VecDeque};
+use std::borrow::Borrow;
+use std::collections::VecDeque;
 
 use derive_more::Debug;
 
-use crate::{
-    IncBpeToken, IncBpeTokenization, IncBpeTokenizer, SkipLen, TokenId,
-    aho_corasick::{AC_NODE_ROOT, ACNodeId},
-    successor::{FOREST_VIRTUAL_ROOT, ForestNodeId},
-};
+use crate::aho_corasick::{AC_NODE_ROOT, ACNodeId};
+use crate::successor::{FOREST_VIRTUAL_ROOT, ForestNodeId};
+use crate::{IncBpeToken, IncBpeTokenization, IncBpeTokenizer, SkipLen, TokenId};
 
 #[derive(Debug)]
 struct EagerTokenNode {
@@ -245,10 +244,10 @@ impl<T> Iterator for EagerBpeTokenization<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::test_utils::{bytes_into_tokens, utf8_into_tokens};
     use crate::{
         Dictionary, IncBpeToken, IncBpeTokenizer, NormalizedDict, NormalizedDictBuildError,
         TokenId, Vocab, bpe_with_heap,
-        test_utils::{bytes_into_tokens, utf8_into_tokens},
     };
 
     fn eager_bpe_any_case(vocab: &[&str], rules: &[(&str, &str)], sequences: &[&str]) {

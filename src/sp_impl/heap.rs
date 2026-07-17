@@ -179,12 +179,11 @@ where
 
 #[cfg(test)]
 mod tests {
-    use rand::{RngExt, SeedableRng, rngs::StdRng};
+    use rand::rngs::StdRng;
+    use rand::{RngExt, SeedableRng};
 
-    use crate::{
-        sp_impl::heap::AdjustableHeap,
-        typed_vec::{TypedVec, typed_vec_index},
-    };
+    use crate::sp_impl::heap::AdjustableHeap;
+    use crate::typed_vec::{TypedVec, typed_vec_index};
 
     typed_vec_index!(KeyId, u32);
     typed_vec_index!(PosId, u32);

@@ -1,13 +1,9 @@
 use derive_more::{Debug, Deref};
 
-use crate::{
-    TokenId,
-    aho_corasick::{
-        AC_NODE_ROOT, ACNodeId, ACSuffixLinkTree, ACTransTable, ACTrie,
-        heavy_light::heavy_light_decomposition,
-    },
-    typed_vec::TypedVec,
-};
+use crate::TokenId;
+use crate::aho_corasick::heavy_light::heavy_light_decomposition;
+use crate::aho_corasick::{AC_NODE_ROOT, ACNodeId, ACSuffixLinkTree, ACTransTable, ACTrie};
+use crate::typed_vec::TypedVec;
 
 #[derive(Debug, Deref)]
 pub(crate) struct ACAutomaton {
@@ -80,10 +76,8 @@ impl ACAutomaton {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        Vocab,
-        aho_corasick::{AC_NODE_ROOT, ACAutomaton},
-    };
+    use crate::Vocab;
+    use crate::aho_corasick::{AC_NODE_ROOT, ACAutomaton};
 
     #[test]
     fn test_ac_automaton() {

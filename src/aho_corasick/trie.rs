@@ -1,11 +1,11 @@
-use std::{collections::BTreeMap, iter::FusedIterator};
+use std::collections::BTreeMap;
+use std::iter::FusedIterator;
 
 use derive_more::{Debug, Deref};
 
-use crate::{
-    aho_corasick::{AC_NODE_ROOT, ACNodeId, relabeling::Relabeling},
-    typed_vec::{TypedVec, vec_with_head},
-};
+use crate::aho_corasick::relabeling::Relabeling;
+use crate::aho_corasick::{AC_NODE_ROOT, ACNodeId};
+use crate::typed_vec::{TypedVec, vec_with_head};
 
 #[derive(Debug, Deref)]
 pub(crate) struct ACTrie {

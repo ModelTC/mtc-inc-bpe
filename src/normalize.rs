@@ -4,10 +4,10 @@ use derive_more::Deref;
 use rapidhash::{HashMapExt, RapidHashMap};
 use thiserror::Error;
 
-use crate::{
-    Dictionary, RuleId, TokenId, bpe_with_heap_last_merge, dict::RuleIdVec, typed_vec::TypedVec,
-    vocab::TokenIdVec,
-};
+use crate::dict::RuleIdVec;
+use crate::typed_vec::TypedVec;
+use crate::vocab::TokenIdVec;
+use crate::{Dictionary, RuleId, TokenId, bpe_with_heap_last_merge};
 
 #[derive(Clone, Debug, Error)]
 #[non_exhaustive]
@@ -237,9 +237,9 @@ impl NormalizedDict {
 
 #[cfg(test)]
 mod tests {
+    use crate::test_utils::{bytes_into_tokens, utf8_into_tokens};
     use crate::{
         Dictionary, NormalizedDict, NormalizedDictBuildError, RuleId, Vocab, bpe_with_heap,
-        test_utils::{bytes_into_tokens, utf8_into_tokens},
     };
 
     fn build_dict<T: AsRef<[u8]>, R: IntoIterator<Item = (T, T)>>(

@@ -1,4 +1,5 @@
-use std::{hash::Hash, ops::Index};
+use std::hash::Hash;
+use std::ops::Index;
 
 use bytes::BytesMut;
 use derive_more::{Deref, From, Into};
@@ -6,10 +7,8 @@ use rapidhash::{HashMapExt, RapidHashMap};
 use thiserror::Error;
 use tinyvec::TinyVec;
 
-use crate::{
-    Token, TokenId, Vocab,
-    typed_vec::{TypedVec, typed_vec_index},
-};
+use crate::typed_vec::{TypedVec, typed_vec_index};
+use crate::{Token, TokenId, Vocab};
 
 typed_vec_index!(pub RuleId, u32);
 

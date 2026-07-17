@@ -10,15 +10,13 @@ mod suf_suc;
 mod typed_vec;
 mod vocab;
 
-pub use crate::{
-    dict::{DictBuildError, Dictionary, Rule, RuleId},
-    eager::EagerBpeTokenization,
-    inc_bpe::{IncBpeToken, IncBpeTokenChainIter, IncBpeTokenization, IncBpeTokenizer},
-    normalize::{NormalizedDict, NormalizedDictBuildError},
-    sp_impl::{bpe_with_heap, bpe_with_heap_last_merge},
-    successor::SkipLen,
-    vocab::{MAX_TOKEN_LENGTH, Token, TokenId, Vocab, VocabBuildError},
-};
+pub use crate::dict::{DictBuildError, Dictionary, Rule, RuleId};
+pub use crate::eager::EagerBpeTokenization;
+pub use crate::inc_bpe::{IncBpeToken, IncBpeTokenChainIter, IncBpeTokenization, IncBpeTokenizer};
+pub use crate::normalize::{NormalizedDict, NormalizedDictBuildError};
+pub use crate::sp_impl::{bpe_with_heap, bpe_with_heap_last_merge};
+pub use crate::successor::SkipLen;
+pub use crate::vocab::{MAX_TOKEN_LENGTH, Token, TokenId, Vocab, VocabBuildError};
 
 #[cfg(test)]
 mod test_utils;

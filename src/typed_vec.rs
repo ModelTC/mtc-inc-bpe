@@ -1,9 +1,7 @@
 #![allow(dead_code)]
-use std::{
-    iter::FusedIterator,
-    marker::PhantomData,
-    ops::{Index, IndexMut},
-};
+use std::iter::FusedIterator;
+use std::marker::PhantomData;
+use std::ops::{Index, IndexMut};
 
 use derive_more::{Debug, IntoIterator};
 
@@ -309,7 +307,8 @@ macro_rules! typed_vec_index {
     };
 }
 
-pub(crate) use {from_usize, typed_vec_index};
+pub(crate) use from_usize;
+pub(crate) use typed_vec_index;
 
 #[cfg(test)]
 mod tests {

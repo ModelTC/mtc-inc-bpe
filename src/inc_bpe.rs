@@ -2,14 +2,12 @@ use std::borrow::Borrow;
 
 use derive_more::{Constructor, Debug, Deref, From, Into};
 
-use crate::{
-    NormalizedDict, SkipLen, TokenId,
-    aho_corasick::{AC_NODE_ROOT, ACAutomaton, ACNodeId, ACTransTable},
-    centroid::SufSucCentroidTrees,
-    successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, SucForest},
-    suf_suc::{SufSucNode, SufSucNodeSet},
-    typed_vec::TypedVec,
-};
+use crate::aho_corasick::{AC_NODE_ROOT, ACAutomaton, ACNodeId, ACTransTable};
+use crate::centroid::SufSucCentroidTrees;
+use crate::successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, SucForest};
+use crate::suf_suc::{SufSucNode, SufSucNodeSet};
+use crate::typed_vec::TypedVec;
+use crate::{NormalizedDict, SkipLen, TokenId};
 
 #[derive(Clone, Copy, Debug, Into, From, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct IncBpeToken {
@@ -279,12 +277,13 @@ impl<T> IncBpeTokenization<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::{borrow::Borrow, sync::Arc};
+    use std::borrow::Borrow;
+    use std::sync::Arc;
 
+    use crate::test_utils::{bytes_into_tokens, utf8_into_tokens};
     use crate::{
         Dictionary, IncBpeToken, IncBpeTokenChainIter, IncBpeTokenizer, NormalizedDict,
         NormalizedDictBuildError, TokenId, Vocab, bpe_with_heap,
-        test_utils::{bytes_into_tokens, utf8_into_tokens},
     };
 
     fn inc_bpe_short_any_case(vocab: &[&str], rules: &[(&str, &str)], sequences: &[&str]) {

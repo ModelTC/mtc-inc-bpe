@@ -1,7 +1,6 @@
-use crate::{
-    aho_corasick::{AC_NODE_ROOT, ACNodeId, ACSuffixLinkTree, ACTrie, relabeling::Relabeling},
-    typed_vec::{TypedVec, typed_vec_index},
-};
+use crate::aho_corasick::relabeling::Relabeling;
+use crate::aho_corasick::{AC_NODE_ROOT, ACNodeId, ACSuffixLinkTree, ACTrie};
+use crate::typed_vec::{TypedVec, typed_vec_index};
 
 const ALPHABET_SIZE: usize = 1 << 8;
 const TRANS_TILE: usize = 1 << 4;
