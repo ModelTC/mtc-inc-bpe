@@ -2,10 +2,8 @@ use std::iter::FusedIterator;
 
 use derive_more::Deref;
 
-use crate::{
-    aho_corasick::{AC_NODE_ROOT, ACNodeId, ACNodeIdInlineVec},
-    typed_vec::TypedVec,
-};
+use crate::aho_corasick::{AC_NODE_ROOT, ACNodeId, ACNodeIdInlineVec};
+use crate::typed_vec::TypedVec;
 
 #[derive(Debug, Deref)]
 pub(crate) struct ACSuffixLinkTree {

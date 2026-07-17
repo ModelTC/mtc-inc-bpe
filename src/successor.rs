@@ -1,12 +1,10 @@
 use derive_more::Deref;
 use tinyvec::TinyVec;
 
-use crate::{
-    NormalizedDict, RuleId, TokenId,
-    normalize::ATOMIC_TOKEN_PRIORITY,
-    typed_vec::{TypedVec, typed_vec_index},
-    vocab::TokenIdVec,
-};
+use crate::normalize::ATOMIC_TOKEN_PRIORITY;
+use crate::typed_vec::{TypedVec, typed_vec_index};
+use crate::vocab::TokenIdVec;
+use crate::{NormalizedDict, RuleId, TokenId};
 
 pub type SkipLen = u16;
 
@@ -184,10 +182,8 @@ impl SucForest {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        Dictionary, NormalizedDict, Vocab,
-        successor::{FOREST_VIRTUAL_ROOT, SucForest},
-    };
+    use crate::successor::{FOREST_VIRTUAL_ROOT, SucForest};
+    use crate::{Dictionary, NormalizedDict, Vocab};
 
     #[test]
     fn test_suc_forest() {

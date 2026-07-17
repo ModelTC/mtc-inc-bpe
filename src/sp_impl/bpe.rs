@@ -1,8 +1,6 @@
-use crate::{
-    Dictionary, RuleId, TokenId,
-    sp_impl::heap::AdjustableHeap,
-    typed_vec::{TypedVec, typed_vec_index},
-};
+use crate::sp_impl::heap::AdjustableHeap;
+use crate::typed_vec::{TypedVec, typed_vec_index};
+use crate::{Dictionary, RuleId, TokenId};
 
 typed_vec_index!(pub(super) InputTextPos, u32);
 
@@ -107,10 +105,8 @@ pub fn bpe_with_heap_last_merge<const ALLOW_IMPROPER_RULES: bool>(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        Dictionary, TokenId, Vocab, bpe_with_heap,
-        test_utils::{bytes_into_tokens, utf8_into_tokens},
-    };
+    use crate::test_utils::{bytes_into_tokens, utf8_into_tokens};
+    use crate::{Dictionary, TokenId, Vocab, bpe_with_heap};
 
     fn build_dict<T: AsRef<[u8]>, R: IntoIterator<Item = (T, T)>>(
         vocab: &Vocab,

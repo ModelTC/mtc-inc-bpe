@@ -1,16 +1,12 @@
-use std::{
-    collections::{BTreeMap, LinkedList, VecDeque},
-    ops::{Index, Range},
-};
+use std::collections::{BTreeMap, LinkedList, VecDeque};
+use std::ops::{Index, Range};
 
 use derive_more::Deref;
 use tinyvec::TinyVec;
 
-use crate::{
-    successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, ForestNodeIdVec, SucForest, SucNode},
-    suf_suc::{SufSucNode, SufSucNodeSet},
-    typed_vec::{TypedVec, typed_vec_index},
-};
+use crate::successor::{FOREST_VIRTUAL_ROOT, ForestNodeId, ForestNodeIdVec, SucForest, SucNode};
+use crate::suf_suc::{SufSucNode, SufSucNodeSet};
+use crate::typed_vec::{TypedVec, typed_vec_index};
 
 typed_vec_index!(pub(crate) CentroidId, u16);
 typed_vec_index!(SubTreeNodeId, u16);
@@ -350,13 +346,11 @@ impl<'n> SufSucCentroidTreeView<'n> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        Dictionary, NormalizedDict, Vocab,
-        aho_corasick::ACAutomaton,
-        centroid::{CentroidId, SufSucCentroidTrees},
-        successor::{FOREST_VIRTUAL_ROOT, SucForest},
-        suf_suc::SufSucNodeSet,
-    };
+    use crate::aho_corasick::ACAutomaton;
+    use crate::centroid::{CentroidId, SufSucCentroidTrees};
+    use crate::successor::{FOREST_VIRTUAL_ROOT, SucForest};
+    use crate::suf_suc::SufSucNodeSet;
+    use crate::{Dictionary, NormalizedDict, Vocab};
 
     fn centroid_case(rules: &[(&str, &str)]) {
         let vocab = Vocab::new([

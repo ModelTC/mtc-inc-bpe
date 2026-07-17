@@ -6,10 +6,8 @@ mod suf_link_tree;
 mod trans;
 mod trie;
 
-pub(crate) use self::{
-    automaton::ACAutomaton,
-    index::{AC_NODE_ROOT, ACNodeId, ACNodeIdInlineVec},
-    suf_link_tree::ACSuffixLinkTree,
-    trans::ACTransTable,
-    trie::ACTrie,
-};
+pub(crate) use self::automaton::ACAutomaton;
+pub(crate) use self::index::{AC_NODE_ROOT, ACNodeId, ACNodeIdInlineVec};
+pub(crate) use self::suf_link_tree::ACSuffixLinkTree;
+pub(crate) use self::trans::ACTransTable;
+pub(crate) use self::trie::ACTrie;

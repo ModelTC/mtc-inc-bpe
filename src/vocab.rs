@@ -1,4 +1,6 @@
-use std::{hash::Hash, iter::FusedIterator, ops::Index};
+use std::hash::Hash;
+use std::iter::FusedIterator;
+use std::ops::Index;
 
 use bytes::Bytes;
 use rapidhash::RapidHashMap;
@@ -180,10 +182,8 @@ impl Index<TokenId> for Vocab {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        TokenId, Vocab,
-        test_utils::{bytes_into_tokens, utf8_into_tokens},
-    };
+    use crate::test_utils::{bytes_into_tokens, utf8_into_tokens};
+    use crate::{TokenId, Vocab};
 
     #[test]
     fn test_vocab() {
