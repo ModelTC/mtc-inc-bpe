@@ -1,8 +1,12 @@
 name: Release-plz
+permissions:
+  pull-requests: write
+  contents: write
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: [Cargo Build & Test]
+    types: [completed]
+    branches: [main]
 jobs:
   release-plz-release:
     name: Release-plz release

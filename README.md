@@ -9,14 +9,17 @@ Incremental BPE tokenization for all prefixes.
 
 ## License
 
-- &copy; 2025 Chielo Newctle \<[ChieloNewctle@gmail.com](mailto:ChieloNewctle@gmail.com)\>
-- &copy; 2025 ModelTC Team
+- &copy; 2025-2026 ModelTC Team (Chielo
+  \<[mail@chielo.org](mailto:mail@chielo.org)\>)
 
 This project is licensed under either of
 
-- [MIT license](https://opensource.org/licenses/MIT) ([`LICENSE-MIT`](LICENSE-MIT))
-- [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0) ([`LICENSE-APACHE`](LICENSE-APACHE))
+- [MIT license](https://opensource.org/licenses/MIT)
+  ([`LICENSE-MIT`](LICENSE-MIT))
+- [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+  ([`LICENSE-APACHE`](LICENSE-APACHE))
 
 at your option.
 
-The [SPDX](https://spdx.dev) license identifier for this project is `MIT OR Apache-2.0`.
+The [SPDX](https://spdx.dev) license identifier for this project is
+`MIT OR Apache-2.0`.
