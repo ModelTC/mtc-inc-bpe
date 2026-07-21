@@ -121,11 +121,7 @@ mod tests {
         let search = |s: &str| {
             let mut node = AC_NODE_ROOT;
             for &b in s.as_bytes() {
-                if let Some(next) = automaton.trie.get(node, b) {
-                    node = next;
-                } else {
-                    return None;
-                }
+                node = automaton.trie.get(node, b)?;
             }
             Some(node)
         };
