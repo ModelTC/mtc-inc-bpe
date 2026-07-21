@@ -8,7 +8,7 @@ repository = "https://github.com/ModelTC/mtc-inc-bpe"
 homepage = "https://github.com/ModelTC/mtc-inc-bpe"
 documentation = "https://docs.rs/mtc-inc-bpe"
 readme = "README.md"
-exclude = ["release-plz.toml", ".github", "tools"]
+exclude = ["release-plz.toml", "rustfmt.toml", ".github", "tools"]
 
 [dependencies]
 bytes = { version = "1.12.1", default-features = false }
